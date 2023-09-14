@@ -1,0 +1,35 @@
+{
+    "date": {
+        "date": "2023-11-01",
+        "__dataclass__": "datetime.date"
+    },
+    "transactions": [
+        {
+            "account": {
+                "account_number": 1920,
+                "description": "Plusgiro",
+                "id": 1228,
+                "__dataclass__": "account.Account"
+            },
+            "credit": 0,
+            "debit": 200,
+            "notes": "Swish from AP",
+            "__dataclass__": "transaction.Transaction"
+        },
+        {
+            "account": {
+                "account_number": 1920,
+                "description": "Plusgiro",
+                "id": 1229,
+                "__dataclass__": "account.Account"
+            },
+            "credit": 100,
+            "debit": 0,
+            "notes": "Utbetalning",
+            "__dataclass__": "transaction.Transaction"
+        }
+    ],
+    "notes": "",
+    "id": 0,
+    "__dataclass__": "verification.Verification"
+}
