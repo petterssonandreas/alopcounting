@@ -1,13 +1,28 @@
 
+import re
 from typing import Any
 from account import Account, load_accounts, find_account
 from transaction import Transaction
 from verification import Verification, load_verifications, save_verifications
 import PySimpleGUI as sg
 import pprint
+import dataclasses as dc
 
 
-cols = {"Account": "acc", "Description": "desc", "Kredit": "cre", "Debet": "deb", "Notes": "notes"}
+
+@dc.dataclass
+class ColInfo:
+    name: str
+    size: tuple[int, int]
+
+
+COLS = {
+    "acc": ColInfo("Account", (10, 1)),
+    "des": ColInfo("Description", (30, 1)),
+    "cre": ColInfo("Kredit", (10, 1)),
+    "deb": ColInfo("Debet", (10, 1)),
+    "not": ColInfo("Notes", (50, 1)),
+}
 MAX_ROWS = 20
 MAX_COL = 5
 
@@ -30,14 +45,15 @@ def populate_verification_layout(verifications: list[Verification], window: sg.W
     # NOTE: need to set visible from left to right, i.e. idx first
     num_rows = len(ver.transactions)
     [window[f"row{row}_idx"].update(visible=(row < num_rows)) for row in range(MAX_ROWS)]
-    [window[f"row{row}_{col}"].update('', visible=(row < num_rows)) for col in cols.values() for row in range(MAX_ROWS)]
+    [window[f"row{row}_{col}"].update('', visible=(row < num_rows)) for col in COLS.keys() for row in range(MAX_ROWS)]
+    [window[f"row{row}_delete"].update(visible=(row < num_rows)) for row in range(MAX_ROWS)]
 
     for i, trans in enumerate(ver.transactions):
-        window[f"row{i}_{cols['Account']}"].update(trans.account.account_number)
-        window[f"row{i}_{cols['Description']}"].update(trans.account.description)
-        window[f"row{i}_{cols['Kredit']}"].update(trans.credit)
-        window[f"row{i}_{cols['Debet']}"].update(trans.debit)
-        window[f"row{i}_{cols['Notes']}"].update(trans.notes)
+        window[f"row{i}_acc"].update(trans.account.account_number)
+        window[f"row{i}_des"].update(trans.account.description)
+        window[f"row{i}_cre"].update(trans.credit)
+        window[f"row{i}_deb"].update(trans.debit)
+        window[f"row{i}_not"].update(trans.notes)
 
 
 def store_verification_from_layout(verification: Verification, values: dict[str: str], accounts: list[Account]):
@@ -53,15 +69,34 @@ def store_verification_from_layout(verification: Verification, values: dict[str:
             sg.popup(f"Row {row}: No account with number '{acc_val}'!")
             return
 
-        new_transes.append(Transaction(acc, vals[f"row{row}_cre"], vals[f"row{row}_deb"], vals[f"row{row}_notes"]))
+        new_transes.append(Transaction(acc, vals[f"row{row}_cre"], vals[f"row{row}_deb"], vals[f"row{row}_not"]))
 
     verification.transactions = new_transes
     pprint.pprint(new_transes, indent=4)
 
 def get_column_layout() -> list[list[Any]]:
-    columm_layout = [[sg.Text("", size=(4, 1), justification='right')] + [sg.Text(head, justification='left', size=(9, 1), pad=(0,0), border_width=0) for head in cols.keys()]]
-    columm_layout += [[sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx")] + [sg.InputText(size=(10, 1), pad=(1,1), border_width=0, justification='right', key=f"row{row}_{col}") for col in cols.values()] for row in range(MAX_ROWS)]
+    columm_layout = [
+        [sg.Text("", size=(4, 1))] +
+        [sg.Text(COLS["acc"].name, justification='left', size=COLS["acc"].size, pad=(0,0), border_width=0)] +
+        [sg.Text(COLS["des"].name, justification='left', size=COLS["des"].size, pad=(0,0), border_width=0)] +
+        [sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size, pad=(0,0), border_width=0)] +
+        [sg.Text(COLS["deb"].name, justification='left', size=COLS["deb"].size, pad=(0,0), border_width=0)] +
+        [sg.Text(COLS["not"].name, justification='left', size=COLS["not"].size, pad=(0,0), border_width=0)] +
+        [sg.Text("", size=(4, 1))]
+    ]
+    columm_layout += [
+        [sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx")] +
+        [sg.InputText(size=COLS["acc"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_acc")] +
+        [sg.InputText(size=COLS["des"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_des")] +
+        [sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre")] +
+        [sg.InputText(size=COLS["deb"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_deb")] +
+        [sg.InputText(size=COLS["not"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_not")] +
+        [sg.Button("X", key=f"row{row}_delete", pad=(3, 0))]
+        for row in range(MAX_ROWS)
+    ]
     return columm_layout
+
+ROW_REGEX = re.compile(r'row(?P<row>\d+)_\w+')
 
 def verifications_window_loop(accounts: list[Account], verifications: list[Verification]):
 
@@ -75,16 +110,19 @@ def verifications_window_loop(accounts: list[Account], verifications: list[Verif
         [sg.HorizontalSeparator()],
         [sg.Button('Prev', key='prev'), sg.Button('Next', key='next')],
         [sg.Button('Save verification'), sg.Button('Quit')],
-        [sg.Column(get_column_layout(), size=(800, 600), scrollable=True, key="ver_col")],
+        [sg.Column(get_column_layout(), size=(1000, 600), scrollable=True, key="ver_col")],
     ]
 
     current_ver_idx = 0
 
     # Create the Window
-    window = sg.Window('ALOPcounting VERIFICATION', layout, finalize=True, resizable=True, size=(1000, 800))
+    window = sg.Window('ALOPcounting VERIFICATION', layout, finalize=True, resizable=True)
     # Event Loop to process "events" and get the "values" of the inputs
+    repopulate = True
     while True:
-        populate_verification_layout(verifications, window, current_ver_idx)
+        if repopulate:
+            populate_verification_layout(verifications, window, current_ver_idx)
+        repopulate = False
 
         event, values = window.read()
         print(event, values)
@@ -93,10 +131,17 @@ def verifications_window_loop(accounts: list[Account], verifications: list[Verif
             break
         if event == 'next':
             current_ver_idx += 1
+            repopulate = True
         if event == 'prev':
             current_ver_idx -= 1
+            repopulate = True
         if event == 'Save verification':
             store_verification_from_layout(verifications[current_ver_idx], values, accounts)
+            repopulate = True
+        if "_delete" in event:
+            match = ROW_REGEX.match(event)
+            assert match, f"Bad event '{event}'"
+            [window[f"row{match.group('row')}_{col}"].update('') for col in COLS.keys()]
 
     window.close()
 

@@ -7,48 +7,36 @@
         {
             "account": {
                 "account_number": 1920,
-                "description": "Plusgiro",
-                "id": 1228,
+                "description": "PlusGiro",
+                "id": 232,
                 "__dataclass__": "account.Account"
             },
-            "credit": 0,
-            "debit": 200,
+            "credit": "0",
+            "debit": "200",
             "notes": "Swish from AP",
             "__dataclass__": "transaction.Transaction"
         },
         {
             "account": {
                 "account_number": 1920,
-                "description": "Plusgiro",
-                "id": 1229,
+                "description": "PlusGiro",
+                "id": 232,
                 "__dataclass__": "account.Account"
             },
-            "credit": 100,
-            "debit": 0,
-            "notes": "Utbetalning",
-            "__dataclass__": "transaction.Transaction"
-        },
-        {
-            "account": {
-                "account_number": 1920,
-                "description": "Plusgiro",
-                "id": 1228,
-                "__dataclass__": "account.Account"
-            },
-            "credit": 0,
-            "debit": 200,
+            "credit": "0",
+            "debit": "200",
             "notes": "Swish from AP",
             "__dataclass__": "transaction.Transaction"
         },
         {
             "account": {
-                "account_number": 1920,
-                "description": "Plusgiro",
-                "id": 1229,
+                "account_number": 1330,
+                "description": "Andelar i intressef\u00f6retag, gemensamt styrda f\u00f6retag och \u00f6vriga f\u00f6retag som det finns ett \u00e4garintresse i",
+                "id": 96,
                 "__dataclass__": "account.Account"
             },
-            "credit": 100,
-            "debit": 0,
+            "credit": "100",
+            "debit": "0",
             "notes": "Utbetalning",
             "__dataclass__": "transaction.Transaction"
         }
