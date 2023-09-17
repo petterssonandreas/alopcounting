@@ -18,8 +18,8 @@ class ColInfo:
 COLS = {
     "acc": ColInfo("Account", (10, 1)),
     "des": ColInfo("Description", (30, 1)),
-    "cre": ColInfo("Kredit", (10, 1)),
     "deb": ColInfo("Debet", (10, 1)),
+    "cre": ColInfo("Kredit", (10, 1)),
     "not": ColInfo("Notes", (50, 1)),
 }
 MAX_ROWS = 20
@@ -49,8 +49,8 @@ def populate_verification_layout(verifications: list[Verification], window: sg.W
     for i, trans in enumerate(ver.transactions):
         window[f"row{i}_acc"].update(trans.account.account_number)
         window[f"row{i}_des"].update(trans.account.description)
-        window[f"row{i}_cre"].update(trans.credit)
         window[f"row{i}_deb"].update(trans.debit)
+        window[f"row{i}_cre"].update(trans.credit)
         window[f"row{i}_not"].update(trans.notes)
 
 
@@ -61,8 +61,8 @@ def store_verification_from_layout(verification: Verification, values: dict[str:
         if not vals[f"row{row}_acc"]:
             continue
 
-        credit = 0.0
         debit = 0.0
+        credit = 0.0
 
         acc_val = vals[f"row{row}_acc"]
         acc = find_account(acc_val, accounts)
@@ -70,23 +70,23 @@ def store_verification_from_layout(verification: Verification, values: dict[str:
             sg.popup(f"Row {row}: No account with number '{acc_val}'!")
             return False
         try:
-            credit = float(str(vals[f"row{row}_cre"]).replace(",", "."))
-        except ValueError:
-            if vals[f"row{row}_cre"]:
-                sg.popup(f"Row {row}: Bad kredit, not a number!")
-                return False
-        try:
             debit = float(str(vals[f"row{row}_deb"]).replace(",", "."))
         except ValueError:
             if vals[f"row{row}_deb"]:
                 sg.popup(f"Row {row}: Bad debet, not a number!")
+                return False
+        try:
+            credit = float(str(vals[f"row{row}_cre"]).replace(",", "."))
+        except ValueError:
+            if vals[f"row{row}_cre"]:
+                sg.popup(f"Row {row}: Bad kredit, not a number!")
                 return False
 
         if credit and debit:
             sg.popup(f"Row {row}: Both kredit and debet cannot be set!")
             return False
 
-        new_transes.append(Transaction(acc, credit, debit, vals[f"row{row}_not"]))
+        new_transes.append(Transaction(acc, debit, credit, vals[f"row{row}_not"]))
 
     verification.transactions = new_transes
     pprint.pprint(new_transes, indent=4)
@@ -97,8 +97,8 @@ def get_column_layout(accounts: list[Account]) -> list[list[Any]]:
         [sg.Text("", size=(4, 1))] +
         [sg.Text(COLS["acc"].name, justification='left', size=COLS["acc"].size[0] + 1, pad=(1,1), border_width=0,)] +
         [sg.Text(COLS["des"].name, justification='left', size=COLS["des"].size[0], pad=(1,1), border_width=0,)] +
-        [sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size[0] - 1, pad=(1,1), border_width=0,)] +
         [sg.Text(COLS["deb"].name, justification='left', size=COLS["deb"].size[0] - 2, pad=(1,1), border_width=0,)] +
+        [sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size[0] - 1, pad=(1,1), border_width=0,)] +
         [sg.Text(COLS["not"].name, justification='left', size=COLS["not"].size[0] - 4, pad=(1,1), border_width=0,)] +
         [sg.Text("", size=(3, 0))]
     ]
@@ -106,8 +106,8 @@ def get_column_layout(accounts: list[Account]) -> list[list[Any]]:
         [sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx")] +
         [sg.Combo(values=[acc.account_number for acc in accounts], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc")] +
         [sg.Text(size=COLS["des"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_des")] +
-        [sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre")] +
         [sg.InputText(size=COLS["deb"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_deb")] +
+        [sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre")] +
         [sg.InputText(size=COLS["not"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_not")] +
         [sg.Button("X", key=f"row{row}_delete", pad=(3, 0))]
         for row in range(MAX_ROWS)
