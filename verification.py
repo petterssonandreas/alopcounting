@@ -21,11 +21,10 @@ class Datetime:
 
 @dc.dataclass
 class Verification:
-    date: datetime.date
+    id: int
+    date: datetime.date = dc.field(default_factory=datetime.date.today)
     transactions: list[Transaction] = dc.field(default_factory=list)
     notes: str = ""
-
-    id: int = dc.field(default_factory=itertools.count().__next__)
 
     @classmethod
     def load_from_file(cls, filename: str | Path):
@@ -41,6 +40,12 @@ class Verification:
         with open(dir / filename, "w") as verfile:
             verfile.write(dataclass_json_dumps(self, indent=4))
 
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __lte__(self, other):
+        return self.id <= other.id
+
 def load_verifications(verifications_dir: str) -> list[Verification]:
     verifications: list[Verification] = []
 
@@ -52,11 +57,12 @@ def load_verifications(verifications_dir: str) -> list[Verification]:
     for filepath in dir.iterdir():
         verifications.append(Verification.load_from_file(filepath))
 
+    verifications.sort()
+
     print(f"Loaded {len(verifications)} verifications")
     return verifications
 
 def save_verifications(verifications_dir: str, verifications: list[Verification]):
-
     dir = Path(verifications_dir)
     assert dir.exists(), f"{dir}: no such path"
     assert dir.is_dir(), f"{dir}: not a directory"
@@ -66,3 +72,11 @@ def save_verifications(verifications_dir: str, verifications: list[Verification]
         filepath.unlink()
     for ver in verifications:
         ver.save_to_file(dir)
+
+def save_verification(verifications_dir: str, verification: Verification):
+    dir = Path(verifications_dir)
+    assert dir.exists(), f"{dir}: no such path"
+    assert dir.is_dir(), f"{dir}: not a directory"
+
+    print(f"Using verifications directory: {dir.absolute()}")
+    verification.save_to_file(dir)

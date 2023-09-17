@@ -1,0 +1,23 @@
+{
+    "id": 3,
+    "date": {
+        "date": "2023-09-17",
+        "__dataclass__": "datetime.date"
+    },
+    "transactions": [
+        {
+            "account": {
+                "account_number": 1910,
+                "description": "Kassa",
+                "id": 228,
+                "__dataclass__": "account.Account"
+            },
+            "credit": 100.0,
+            "debit": 0.0,
+            "notes": "",
+            "__dataclass__": "transaction.Transaction"
+        }
+    ],
+    "notes": "",
+    "__dataclass__": "verification.Verification"
+}

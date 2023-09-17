@@ -1,0 +1,35 @@
+{
+    "id": 0,
+    "date": {
+        "date": "2023-09-17",
+        "__dataclass__": "datetime.date"
+    },
+    "transactions": [
+        {
+            "account": {
+                "account_number": 5610,
+                "description": "Personbilskostnader",
+                "id": 752,
+                "__dataclass__": "account.Account"
+            },
+            "credit": 100.0,
+            "debit": 0.0,
+            "notes": "hej",
+            "__dataclass__": "transaction.Transaction"
+        },
+        {
+            "account": {
+                "account_number": 1930,
+                "description": "F\u00f6retagskonto/checkkonto/ aff\u00e4rskonto",
+                "id": 233,
+                "__dataclass__": "account.Account"
+            },
+            "credit": 0.0,
+            "debit": 200.0,
+            "notes": "hjdiksa ghfd\u00f6n dsakhnfkdse fgdsnjkdbwq am,sd sazbdnfjksabdjksa dfsabjkdfhbkjisdabfkds  fdsajhlk",
+            "__dataclass__": "transaction.Transaction"
+        }
+    ],
+    "notes": "",
+    "__dataclass__": "verification.Verification"
+}

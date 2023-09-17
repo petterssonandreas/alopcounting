@@ -5,6 +5,6 @@ from account import Account
 @dc.dataclass
 class Transaction:
     account: Account
-    credit: int
-    debit: int
+    credit: float
+    debit: float
     notes: str = ""
