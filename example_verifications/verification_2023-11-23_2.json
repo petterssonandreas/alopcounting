@@ -1,12 +1,12 @@
 {
     "date": {
-        "date": "2023-11-01",
+        "date": "2023-11-23",
         "__dataclass__": "datetime.date"
     },
     "transactions": [
         {
             "account": {
-                "account_number": 1920,
+                "account_number": 1330,
                 "description": "Plusgiro",
                 "id": 1228,
                 "__dataclass__": "account.Account"
@@ -18,19 +18,7 @@
         },
         {
             "account": {
-                "account_number": 1920,
-                "description": "Plusgiro",
-                "id": 1229,
-                "__dataclass__": "account.Account"
-            },
-            "credit": 100,
-            "debit": 0,
-            "notes": "Utbetalning",
-            "__dataclass__": "transaction.Transaction"
-        },
-        {
-            "account": {
-                "account_number": 1920,
+                "account_number": 1330,
                 "description": "Plusgiro",
                 "id": 1228,
                 "__dataclass__": "account.Account"
@@ -42,8 +30,8 @@
         },
         {
             "account": {
-                "account_number": 1920,
-                "description": "Plusgiro",
+                "account_number": 2550,
+                "description": "Other account",
                 "id": 1229,
                 "__dataclass__": "account.Account"
             },
@@ -54,6 +42,6 @@
         }
     ],
     "notes": "",
-    "id": 0,
+    "id": 2,
     "__dataclass__": "verification.Verification"
 }

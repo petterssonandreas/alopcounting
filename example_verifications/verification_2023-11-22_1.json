@@ -12,18 +12,18 @@
                 "__dataclass__": "account.Account"
             },
             "credit": 0,
-            "debit": 200,
+            "debit": -200,
             "notes": "Swish from AP",
             "__dataclass__": "transaction.Transaction"
         },
         {
             "account": {
-                "account_number": 1920,
-                "description": "Plusgiro",
-                "id": 1229,
+                "account_number": 5560,
+                "description": "Something",
+                "id": 121,
                 "__dataclass__": "account.Account"
             },
-            "credit": 100,
+            "credit": 555874,
             "debit": 0,
             "notes": "Utbetalning",
             "__dataclass__": "transaction.Transaction"

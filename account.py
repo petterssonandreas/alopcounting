@@ -25,3 +25,11 @@ def load_accounts(accounts_filename: str) -> list[Account]:
 
     print(f"Loaded {len(accounts)} accounts")
     return accounts
+
+def find_account(account_num: int | str, accounts: list[Account]) -> Account | None:
+    if type(account_num) == str:
+        account_num = int(account_num)
+    for acc in accounts:
+        if acc.account_number == account_num:
+            return acc
+    return None
