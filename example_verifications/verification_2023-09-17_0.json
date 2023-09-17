@@ -12,8 +12,8 @@
                 "id": 752,
                 "__dataclass__": "account.Account"
             },
-            "credit": 100.0,
             "debit": 0.0,
+            "credit": 100.0,
             "notes": "hej",
             "__dataclass__": "transaction.Transaction"
         },
@@ -24,12 +24,25 @@
                 "id": 233,
                 "__dataclass__": "account.Account"
             },
-            "credit": 0.0,
             "debit": 200.0,
+            "credit": 0.0,
             "notes": "hjdiksa ghfd\u00f6n dsakhnfkdse fgdsnjkdbwq am,sd sazbdnfjksabdjksa dfsabjkdfhbkjisdabfkds  fdsajhlk",
+            "__dataclass__": "transaction.Transaction"
+        },
+        {
+            "account": {
+                "account_number": 1920,
+                "description": "PlusGiro",
+                "id": 232,
+                "__dataclass__": "account.Account"
+            },
+            "debit": 0.0,
+            "credit": 100.0,
+            "notes": "",
             "__dataclass__": "transaction.Transaction"
         }
     ],
     "notes": "",
+    "discarded": false,
     "__dataclass__": "verification.Verification"
 }

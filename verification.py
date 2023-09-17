@@ -25,6 +25,7 @@ class Verification:
     date: datetime.date = dc.field(default_factory=datetime.date.today)
     transactions: list[Transaction] = dc.field(default_factory=list)
     notes: str = ""
+    discarded: bool = False
 
     @classmethod
     def load_from_file(cls, filename: str | Path):

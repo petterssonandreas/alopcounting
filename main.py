@@ -53,6 +53,14 @@ def populate_verification_layout(verifications: list[Verification], window: sg.W
         window[f"row{i}_cre"].update(trans.credit)
         window[f"row{i}_not"].update(trans.notes)
 
+    tot_deb = 0
+    tot_cre = 0
+    [(tot_deb := tot_deb + t.debit, tot_cre := tot_cre + t.credit) for t in ver.transactions]
+    window["accumulate_deb"].update(tot_deb)
+    window["accumulate_cre"].update(tot_cre)
+    diff = round(tot_deb - tot_cre, ndigits=2)
+    window["accumulate_diff"].update(diff)
+
 
 def store_verification_from_layout(verification: Verification, values: dict[str: str], accounts: list[Account]) -> bool:
     rows_dict = {row: {k: v for k, v in values.items() if f"row{row}_" in k} for row in range(MAX_ROWS)}
@@ -70,13 +78,13 @@ def store_verification_from_layout(verification: Verification, values: dict[str:
             sg.popup(f"Row {row}: No account with number '{acc_val}'!")
             return False
         try:
-            debit = float(str(vals[f"row{row}_deb"]).replace(",", "."))
+            debit = round(float(str(vals[f"row{row}_deb"]).replace(",", ".")), ndigits=2)
         except ValueError:
             if vals[f"row{row}_deb"]:
                 sg.popup(f"Row {row}: Bad debet, not a number!")
                 return False
         try:
-            credit = float(str(vals[f"row{row}_cre"]).replace(",", "."))
+            credit = round(float(str(vals[f"row{row}_cre"]).replace(",", ".")), ndigits=2)
         except ValueError:
             if vals[f"row{row}_cre"]:
                 sg.popup(f"Row {row}: Bad kredit, not a number!")
@@ -114,6 +122,17 @@ def get_column_layout(accounts: list[Account]) -> list[list[Any]]:
     ]
     return columm_layout
 
+def get_accumulation_layout() -> list[list[Any]]:
+    return [[
+        sg.Text("", size=(4, 1)),
+        sg.Text("", justification='left', size=COLS["acc"].size[0] + 1, pad=(1,1), border_width=0,),
+        sg.Text("", justification='left', size=COLS["des"].size[0], pad=(1,1), border_width=0,),
+        sg.Text("", key="accumulate_deb", justification='right', size=COLS["deb"].size[0] - 2, pad=(1,1), border_width=0,),
+        sg.Text("", key="accumulate_cre", justification='right', size=COLS["cre"].size[0] - 1, pad=(1,1), border_width=0,),
+        sg.Text("Diff:", justification='right', size=COLS["not"].size[0] - 4, pad=(1,1), border_width=0,),
+        sg.Text("", size=(6, 1), justification="right", key="accumulate_diff"),
+    ]]
+
 ROW_REGEX = re.compile(r'row(?P<row>\d+)_\w+')
 
 def verifications_window_loop(accounts: list[Account], verifications: list[Verification]):
@@ -129,19 +148,26 @@ def verifications_window_loop(accounts: list[Account], verifications: list[Verif
             sg.Button('New verification', key='new_ver', pad=(4, 2))
         ],
         [sg.HorizontalSeparator()],
-        [sg.Text("Verification"), sg.Text("?", key="ver_id")],
-        [sg.Text("Date"), sg.Text("?", key="ver_date")],
+        [sg.Text("Verification:"), sg.Text("?", key="ver_id")],
+        [sg.Text("Date:"), sg.Text("?", key="ver_date")],
+        [sg.Text("", key="discard_indicator", text_color="red", font="bold")],
         [sg.HorizontalSeparator()],
-        [sg.Button('Save verification', pad=((0, 4), (4, 4))), sg.Button('Quit', pad=((4, 4), (4, 4)))],
+        [
+            sg.Button('Save verification', key="save_ver", pad=((0, 4), (4, 4))),
+            sg.Button('Discard verification', key="discard_ver", pad=((4, 4), (4, 4))),
+            sg.Button('Quit', pad=((4, 4), (4, 4)))
+        ],
         [sg.Button("Add row", key="add_row", pad=(0, 1))],
-        [sg.Column(get_column_layout(accounts), size=(1000, 600), scrollable=True, key="ver_col")],
+        [sg.Column(get_column_layout(accounts), scrollable=True, vertical_scroll_only=True, size=(1000, 300), key="ver_col")],
+        [sg.HorizontalSeparator()],
+        [sg.Column(get_accumulation_layout(), key="accumulation_col")],
     ]
 
     current_ver_idx = 0
     num_rows = 0
 
     # Create the Window
-    window = sg.Window('ALOPcounting VERIFICATION', layout, finalize=True, resizable=True)
+    window = sg.Window('ALOPcounting VERIFICATION', layout, size=(1000, 500), finalize=True, resizable=True)
     # Event Loop to process "events" and get the "values" of the inputs
     repopulate = True
     while True:
@@ -155,30 +181,51 @@ def verifications_window_loop(accounts: list[Account], verifications: list[Verif
         else:
             window['add_row'].update(disabled=False)
 
+        if verifications[current_ver_idx].discarded:
+            window["discard_indicator"].update("DISCARDED")
+            window["discard_ver"].update("Un-discard verification")
+        else:
+            window["discard_indicator"].update("")
+            window["discard_ver"].update("Discard verification")
+
         event, values = window.read()
-        print(event, values)
+        print(event)
 
         if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
             break
+
         if event == 'next':
             current_ver_idx += 1
             repopulate = True
+
         if event == 'prev':
             current_ver_idx -= 1
             repopulate = True
-        if event == 'Save verification':
+
+        if event == 'save_ver':
             if store_verification_from_layout(verifications[current_ver_idx], values, accounts):
                 save_verification("example_verifications", verifications[current_ver_idx])
                 repopulate = True
+
+        if event == "discard_ver":
+            verifications[current_ver_idx].discarded = not verifications[current_ver_idx].discarded
+            if store_verification_from_layout(verifications[current_ver_idx], values, accounts):
+                save_verification("example_verifications", verifications[current_ver_idx])
+                repopulate = True
+            else:
+                verifications[current_ver_idx].discarded = not verifications[current_ver_idx].discarded
+
         if "_delete" in event:
             match = ROW_REGEX.match(event)
             assert match, f"Bad event '{event}'"
             [window[f"row{match.group('row')}_{col}"].update('') for col in COLS.keys()]
+
         if event == "add_row":
             num_rows += 1
             window[f"row{num_rows - 1}_idx"].update(visible=True)
             [window[f"row{num_rows - 1}_{col}"].update(visible=True) for col in COLS.keys()]
             window[f"row{num_rows - 1}_delete"].update(visible=True)
+
         if event == "new_ver":
             current_ver_idx = len(verifications)
             verifications.append(Verification(id=current_ver_idx))
