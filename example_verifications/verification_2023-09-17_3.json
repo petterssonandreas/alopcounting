@@ -9,7 +9,6 @@
             "account": {
                 "account_number": 1910,
                 "description": "Kassa",
-                "id": 228,
                 "__dataclass__": "account.Account"
             },
             "credit": 100.0,

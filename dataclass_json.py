@@ -35,7 +35,7 @@ def _dataclass_object_load(d):
         raise ValueError(f"Invalid dataclass reference {ref!r}") from None
 
 def dataclass_json_dumps(obj: Any, indent = 0) -> str:
-    return json.dumps(obj, default=_dataclass_object_dump, indent=indent)
+    return json.dumps(obj, default=_dataclass_object_dump, indent=indent, ensure_ascii=False)
 
 def dataclass_json_loads(obj: str) -> Any:
     return json.loads(obj, object_hook=_dataclass_object_load)

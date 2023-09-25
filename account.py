@@ -1,30 +1,41 @@
 import dataclasses as dc
 import re
 from pathlib import Path
-import itertools
+from dataclass_json import dataclass_json_loads, dataclass_json_dumps
 
 @dc.dataclass
 class Account:
     account_number: int
     description: str
 
-    id: int = dc.field(default_factory=itertools.count().__next__)
+    def __lt__(self, other):
+        return self.account_number < other.account_number
+
+    def __lte__(self, other):
+        return self.account_number <= other.account_number
 
 ACCOUNT_REGEX = re.compile(r'(\d+), "(.+)"')
 
-def load_accounts(accounts_filename: str) -> list[Account]:
-    accounts: list[Account] = []
+def load_accounts(accounts_file: str) -> list[Account]:
+    acc_file_path = Path(accounts_file)
 
-    print(f"Loading accounts from: {Path(accounts_filename).absolute()}")
-    with open(accounts_filename, "r", encoding="utf-8") as ac_file:
-        for line in ac_file.readlines():
-            match = ACCOUNT_REGEX.match(line)
-            if not match:
-                continue
-            accounts.append(Account(int(match.groups()[0]), match.groups()[1]))
+    assert acc_file_path.exists(), f"{acc_file_path}: no such path"
+
+    print(f"Loading accounts from: {acc_file_path.absolute()}")
+    with open(acc_file_path, 'r', encoding='utf-8') as acc_file:
+        accounts = dataclass_json_loads(acc_file.read())
 
     print(f"Loaded {len(accounts)} accounts")
-    return accounts
+    accounts.sort()
+    filtered_accounts = []
+    for idx, acc in enumerate(accounts):
+        if idx > 0 and accounts[idx - 1].account_number == acc.account_number:
+            print(f"Found account with account number duplicate on index {idx}, removing: {acc}")
+        else:
+            filtered_accounts.append(acc)
+
+    print(f"{len(filtered_accounts)} accounts left after filtering")
+    return filtered_accounts
 
 def find_account(account_num: int | str, accounts: list[Account]) -> Account | None:
     if type(account_num) == str:
@@ -33,3 +44,9 @@ def find_account(account_num: int | str, accounts: list[Account]) -> Account | N
         if acc.account_number == account_num:
             return acc
     return None
+
+def save_accounts(accounts_file: str, accounts: list[Account]):
+    acc_file_path = Path(accounts_file)
+    print(f"Storing accounts in file: {acc_file_path.absolute()}")
+    with open(acc_file_path, 'w', encoding="utf-8") as acc_file:
+        acc_file.write(dataclass_json_dumps(accounts, indent=4))

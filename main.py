@@ -1,7 +1,7 @@
 
 import re
 from typing import Any
-from account import Account, load_accounts, find_account
+from account import Account, load_accounts, find_account, save_accounts
 from transaction import Transaction
 from verification import Verification, load_verifications, save_verification
 import PySimpleGUI as sg
@@ -133,6 +133,22 @@ def get_accumulation_layout() -> list[list[Any]]:
         sg.Text("", size=(6, 1), justification="right", key="accumulate_diff"),
     ]]
 
+def get_accounts_column_layout(accounts: list[Account]) -> list[list[Any]]:
+    columm_layout = [
+        [sg.Text("", size=(4, 1))] +
+        [sg.Text("Account", justification='left', size=(6, 1), pad=(1,1), border_width=0,)] +
+        [sg.Text("Description", justification='left', size=(80, 1), pad=(1,1), border_width=0,)] +
+        [sg.Text("", size=(3, 0))],
+    ]
+    for row, acc in enumerate(accounts):
+        columm_layout += [
+            [sg.Text("", size=(4, 1))] +
+            [sg.Text(acc.account_number, justification='left', size=(6, 1), pad=(1,1), border_width=0,)] +
+            [sg.Text(acc.description, justification='left', size=(80, 1), pad=(1,1), border_width=0,)] +
+            [sg.Button("X", key=f"row{row}_delete_acc", pad=(3, 0))],
+        ]
+    return columm_layout
+
 ROW_REGEX = re.compile(r'row(?P<row>\d+)_\w+')
 
 def verifications_window_loop(accounts: list[Account], verifications: list[Verification]):
@@ -233,6 +249,72 @@ def verifications_window_loop(accounts: list[Account], verifications: list[Verif
 
     window.close()
 
+def accounts_window_loop(accounts: list[Account]) -> bool:
+    """
+    Returns true if function should be called again
+    This is because adding and deleting accounts need to redraw/repopulate
+    """
+    ret = False
+
+    sg.set_options(element_padding=(0, 0))
+
+    layout = [
+        [
+            sg.Text('Accounts', font='Any 18'),
+        ],
+        [sg.HorizontalSeparator()],
+        [
+            sg.Button('New account', key="new_acc", pad=((0, 4), (4, 4))),
+            sg.Button('Quit', pad=((4, 4), (4, 4)))
+        ],
+        [sg.Column(get_accounts_column_layout(accounts), scrollable=True, vertical_scroll_only=True, size=(800, 400), key="acc_col")],
+    ]
+
+    # Create the Window
+    window = sg.Window('ALOPcounting ACCOUNTS', layout, size=(1000, 500), finalize=True, resizable=True)
+    # Event Loop to process "events" and get the "values" of the inputs
+    while True:
+        event, values = window.read()
+        print(event)
+
+        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
+            break
+
+        if event == 'new_acc':
+            new_acc_num_input = sg.popup_get_text("Add new account number")
+            try:
+                new_acc_num = int(new_acc_num_input)
+            except ValueError:
+                sg.popup(f"Bad account, '{new_acc_num_input}' not a number!")
+                continue
+            if new_acc_num <= 1000 or new_acc_num > 9999:
+                sg.popup(f"Bad account, '{new_acc_num}' outside accepted range (1000 - 9999)!")
+                continue
+            if find_account(new_acc_num, accounts):
+                sg.popup(f"Bad account, '{new_acc_num}' already exists!")
+                continue
+            new_acc_desc = sg.popup_get_text("Add new account description")
+            new_acc = Account(new_acc_num, new_acc_desc)
+            accounts.append(new_acc)
+            accounts.sort()
+            save_accounts("accounts.json", accounts)
+            ret = True
+            break
+
+        if "_delete_acc" in event:
+            match = ROW_REGEX.match(event)
+            assert match, f"Bad event '{event}'"
+            idx = int(match.group('row'))
+            ok = sg.popup_ok_cancel(f"Remove account {accounts[idx].account_number}?")
+            if ok == "OK":
+                accounts.pop(idx)
+                save_accounts("accounts.json", accounts)
+                ret = True
+                break
+
+    window.close()
+    return ret
+
 def main_window_loop(accounts: list[Account], verifications: list[Verification]):
     # All the stuff inside your window.
     layout = [
@@ -255,6 +337,9 @@ def main_window_loop(accounts: list[Account], verifications: list[Verification])
             break
         if event == 'Show verifications':
             verifications_window_loop(accounts, verifications)
+        if event == 'Show accounts':
+            while accounts_window_loop(accounts):
+                pass
 
     window.close()
 
@@ -273,7 +358,7 @@ def main():
     # ver2 = Verification.load_from_file("myverfile.json")
     # print(ver2)
 
-    accounts = load_accounts("kontoplan.txt")
+    accounts = load_accounts("accounts.json")
     verifications = load_verifications("example_verifications")
 
     main_window_loop(accounts, verifications)

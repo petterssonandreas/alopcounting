@@ -1,0 +1,87 @@
+[
+    {
+        "account_number": 1510,
+        "description": "Kundfordringar",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 1930,
+        "description": "Företagskonto / affärskonto",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 2060,
+        "description": "Eget kapital",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 2099,
+        "description": "Årets resultat",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 2440,
+        "description": "Leverantörsskulder",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 2820,
+        "description": "Kortfristiga skulder till anställda",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 2894,
+        "description": "Kortfristiga skulder swish",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 3014,
+        "description": "Försäljning tjänster inom Sverige, momsfri",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 3020,
+        "description": "Biljettintäkter medlemsaktivitet",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 3029,
+        "description": "Övriga intäkter medlemsaktivitet",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 3900,
+        "description": "Övriga rörelseintäkter",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 3989,
+        "description": "Övriga erhållna bidrag",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 4410,
+        "description": "Medlemsaktiviteter",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 4411,
+        "description": "Medlemsgåvor",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 6540,
+        "description": "IT-tjänster",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 6570,
+        "description": "Bankkostnader",
+        "__dataclass__": "account.Account"
+    },
+    {
+        "account_number": 8999,
+        "description": "Årets resultat",
+        "__dataclass__": "account.Account"
+    }
+]
