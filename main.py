@@ -7,7 +7,9 @@ from verification import Verification, load_verifications, save_verification
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
-
+import dominate
+import dominate.tags as dt
+import webbrowser
 
 @dc.dataclass
 class ColInfo:
@@ -344,6 +346,34 @@ def main_window_loop(accounts: list[Account], verifications: list[Verification])
     window.close()
 
 
+def create_html(accounts: list[Account], filename: str):
+    doc = dominate.document(title='ALOP Counting')
+
+    with doc.head:
+        # dt.link(rel='stylesheet', href='style.css')
+        # dt.script(type='text/javascript', src='script.js')
+        pass
+
+    with doc:
+        with dt.div(id='header'):
+            pass
+
+        with dt.div(style='margin: 50px'):
+            dt.attr(cls='body')
+            dt.h1('Accounts')
+            with dt.table(style='text-align: left'):
+                with dt.tr():
+                    dt.th("Account", style="min-width: 100px")
+                    dt.th("Description", style="min-width: 100px")
+                for acc in accounts:
+                    with dt.tr():
+                        dt.td(acc.account_number)
+                        dt.td(acc.description)
+
+    with open(filename, "w") as html_file:
+        html_file.write(str(doc))
+
+
 def main():
     sg.theme('DarkAmber')   # Add a touch of color
 
@@ -362,6 +392,9 @@ def main():
     verifications = load_verifications("example_verifications")
 
     main_window_loop(accounts, verifications)
+
+    # create_html(accounts, "content.html")
+    # webbrowser.open_new_tab("content.html")
 
 if __name__ == "__main__":
     main()
