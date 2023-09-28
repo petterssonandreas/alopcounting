@@ -7,8 +7,8 @@
     "transactions": [
         {
             "account": {
-                "account_number": 5610,
-                "description": "Personbilskostnader",
+                "account_number": 4411,
+                "description": "Medlemsgåvor",
                 "__dataclass__": "account.Account"
             },
             "debit": 0.0,
@@ -19,7 +19,7 @@
         {
             "account": {
                 "account_number": 1930,
-                "description": "FÃ¶retagskonto/checkkonto/ affÃ¤rskonto",
+                "description": "Företagskonto / affärskonto",
                 "__dataclass__": "account.Account"
             },
             "debit": 200.0,
@@ -29,8 +29,8 @@
         },
         {
             "account": {
-                "account_number": 1920,
-                "description": "PlusGiro",
+                "account_number": 1930,
+                "description": "Företagskonto / affärskonto",
                 "__dataclass__": "account.Account"
             },
             "debit": 0.0,

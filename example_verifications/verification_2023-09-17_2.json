@@ -6,5 +6,6 @@
     },
     "transactions": [],
     "notes": "",
+    "discarded": false,
     "__dataclass__": "verification.Verification"
 }

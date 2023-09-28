@@ -1,23 +1,17 @@
 import dataclasses as dc
-import json
 import datetime
 from pathlib import Path
-import itertools
 
 from dataclass_json import dataclass_json_dumps, dataclass_json_loads
 from transaction import Transaction
 
-class EnhancedJSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if dc.is_dataclass(o):
-            return dc.asdict(o)
-        return super().default(o)
 
 @dc.dataclass
 class Datetime:
     year: int
     month: int
     day: int
+
 
 @dc.dataclass
 class Verification:
@@ -47,37 +41,75 @@ class Verification:
     def __lte__(self, other):
         return self.id <= other.id
 
-def load_verifications(verifications_dir: str) -> list[Verification]:
-    verifications: list[Verification] = []
 
-    dir = Path(verifications_dir)
-    assert dir.exists(), f"{dir}: no such path"
-    assert dir.is_dir(), f"{dir}: not a directory"
+class VerificationList:
+    def __init__(self, verifications_dir: str):
+        self._verifications_dir = verifications_dir
+        self._verifications = self._load_verifications()
+        self._index = 0
 
-    print(f"Loading verifications from: {dir.absolute()}")
-    for filepath in dir.iterdir():
-        verifications.append(Verification.load_from_file(filepath))
+    def __iter__(self):
+        self._index = 0
+        return self
 
-    verifications.sort()
+    def __next__(self) -> Verification:
+        try:
+            result = self._verifications[self._index]
+        except IndexError:
+            raise StopIteration
+        self._index += 1
+        return result
 
-    print(f"Loaded {len(verifications)} verifications")
-    return verifications
+    def _load_verifications(self) -> list[Verification]:
+        verifications: list[Verification] = []
 
-def save_verifications(verifications_dir: str, verifications: list[Verification]):
-    dir = Path(verifications_dir)
-    assert dir.exists(), f"{dir}: no such path"
-    assert dir.is_dir(), f"{dir}: not a directory"
+        dir = Path(self._verifications_dir)
+        assert dir.exists(), f"{dir}: no such path"
+        assert dir.is_dir(), f"{dir}: not a directory"
 
-    print(f"Using verifications directory: {dir.absolute()}")
-    for filepath in dir.iterdir():
-        filepath.unlink()
-    for ver in verifications:
-        ver.save_to_file(dir)
+        print(f"Loading verifications from: {dir.absolute()}")
+        for filepath in dir.iterdir():
+            verifications.append(Verification.load_from_file(filepath))
 
-def save_verification(verifications_dir: str, verification: Verification):
-    dir = Path(verifications_dir)
-    assert dir.exists(), f"{dir}: no such path"
-    assert dir.is_dir(), f"{dir}: not a directory"
+        verifications.sort()
 
-    print(f"Using verifications directory: {dir.absolute()}")
-    verification.save_to_file(dir)
+        print(f"Loaded {len(verifications)} verifications")
+        return verifications
+
+    def get_verifications(self) -> list[Verification]:
+        return self._verifications.copy()
+
+    def get_verification_at(self, index: int) -> Verification:
+        return self._verifications[index]
+
+    @property
+    def len(self) -> int:
+        return len(self._verifications)
+
+    def find_verification(self, id: int | str) -> Verification | None:
+        if type(id) == str:
+            id = int(id)
+        for ver in self:
+            if ver.id == id:
+                return ver
+        return None
+
+    def add_verification(self, verification: Verification):
+        self._verifications.append(verification)
+
+    def remove_verification(self, verification: Verification):
+        self._verifications.remove(verification)
+
+    def save_verifications(self):
+        dir = Path(self._verifications_dir)
+        assert dir.exists(), f"{dir}: no such path"
+        assert dir.is_dir(), f"{dir}: not a directory"
+
+        print(f"Using verifications directory: {dir.absolute()}")
+        for filepath in dir.iterdir():
+            filepath.unlink()
+        for ver in self:
+            ver.save_to_file(dir)
+
+
+verification_list = VerificationList("example_verifications")
