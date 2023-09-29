@@ -1,0 +1,23 @@
+{
+    "id": 0,
+    "date": {
+        "date": "2023-09-29",
+        "__dataclass__": "datetime.date"
+    },
+    "transactions": [
+        {
+            "account": {
+                "account_number": 1930,
+                "description": "Företagskonto / affärskonto",
+                "__dataclass__": "account.Account"
+            },
+            "debit": 1000.0,
+            "credit": 0.0,
+            "notes": "",
+            "__dataclass__": "transaction.Transaction"
+        }
+    ],
+    "notes": "",
+    "discarded": true,
+    "__dataclass__": "verification.Verification"
+}

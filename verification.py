@@ -23,7 +23,7 @@ class Verification:
 
     @classmethod
     def load_from_file(cls, filename: str | Path):
-        with open(filename, "r") as verfile:
+        with open(filename, "r", encoding="utf-8") as verfile:
             ver = dataclass_json_loads(verfile.read())
         return ver
 
@@ -32,7 +32,7 @@ class Verification:
 
     def save_to_file(self, dir: Path):
         filename = f"verification_{self.date}_{self.id}.json"
-        with open(dir / filename, "w") as verfile:
+        with open(dir / filename, "w", encoding="utf-8") as verfile:
             verfile.write(dataclass_json_dumps(self, indent=4))
 
     def __lt__(self, other):
