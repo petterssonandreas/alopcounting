@@ -177,8 +177,7 @@ def get_accounts_column_layout() -> list[list[Any]]:
 ROW_REGEX = re.compile(r'row(?P<row>\d+)_\w+')
 
 
-def verifications_window_loop():
-
+def create_verifications_window() -> sg.Window:
     sg.set_options(element_padding=(0, 0))
 
     layout = [
@@ -205,100 +204,10 @@ def verifications_window_loop():
         [sg.Column(get_accumulation_layout(), key="accumulation_col")],
     ]
 
-    current_ver_idx = 0
-    num_rows = 0
-
-    # Create the Window
-    window = sg.Window('ALOPcounting VERIFICATION', layout, size=(1000, 500), finalize=True, resizable=True)
-    # Event Loop to process "events" and get the "values" of the inputs
-    repopulate = True
-    while True:
-        ver = verification_list.get_verification_at(current_ver_idx)
-
-        if repopulate and verification_list.len:
-            populate_verification_layout(window, current_ver_idx)
-            num_rows = len(ver.transactions)
-        repopulate = False
-
-        if num_rows >= MAX_ROWS:
-            window['add_row'].update(disabled=True)
-        else:
-            window['add_row'].update(disabled=False)
-
-        if ver.discarded:
-            window["discard_indicator"].update("DISCARDED")
-            window["discard_ver"].update("Un-discard verification")
-        else:
-            window["discard_indicator"].update("")
-            window["discard_ver"].update("Discard verification")
-
-        event, values = window.read()
-        print(event)
-
-        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
-            ok = "OK"
-            if not cmp_verification_and_layout(ver, values):
-                ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes and quit?")
-            if ok == "OK":
-                verification_list.save_verifications()
-                break
-
-        if event == 'next':
-            ok = "OK"
-            if not cmp_verification_and_layout(ver, values):
-                ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
-            if ok == "OK":
-                current_ver_idx += 1
-                repopulate = True
-
-        if event == 'prev':
-            ok = "OK"
-            if not cmp_verification_and_layout(ver, values):
-                ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
-            if ok == "OK":
-                current_ver_idx -= 1
-                repopulate = True
-
-        if event == 'validate':
-            if store_verification_from_layout(ver, values):
-                repopulate = True
-
-        if event == "discard_ver":
-            if store_verification_from_layout(ver, values):
-                ver.discarded = not ver.discarded
-                repopulate = True
-
-        if "_delete" in event:
-            match = ROW_REGEX.match(event)
-            assert match, f"Bad event '{event}'"
-            [window[f"row{match.group('row')}_{col}"].update('') for col in COLS.keys()]
-
-        if event == "add_row":
-            num_rows += 1
-            window[f"row{num_rows - 1}_idx"].update(visible=True)
-            [window[f"row{num_rows - 1}_{col}"].update(visible=True) for col in COLS.keys()]
-            window[f"row{num_rows - 1}_delete"].update(visible=True)
-
-        if event == "new_ver":
-            ok = "OK"
-            if not cmp_verification_and_layout(ver, values):
-                ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
-            if ok == "OK":
-                current_ver_idx = verification_list.len
-                ver = Verification(id=current_ver_idx)
-                verification_list.add_verification(ver)
-                repopulate = True
-
-    window.close()
+    return sg.Window('ALOPcounting Verifications', layout, size=(1000, 500), finalize=True, resizable=True)
 
 
-def accounts_window_loop() -> bool:
-    """
-    Returns true if function should be called again
-    This is because adding and deleting accounts need to redraw/repopulate
-    """
-    ret = False
-
+def create_accounts_window() -> sg.Window:
     sg.set_options(element_padding=(0, 0))
 
     layout = [
@@ -313,79 +222,184 @@ def accounts_window_loop() -> bool:
         [sg.Column(get_accounts_column_layout(), scrollable=True, vertical_scroll_only=True, size=(800, 400), key="acc_col")],
     ]
 
-    # Create the Window
-    window = sg.Window('ALOPcounting ACCOUNTS', layout, size=(1000, 500), finalize=True, resizable=True)
-    # Event Loop to process "events" and get the "values" of the inputs
-    while True:
-        event, values = window.read()
-        print(event)
-
-        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
-            break
-
-        if event == 'new_acc':
-            new_acc_num_input = sg.popup_get_text("Add new account number")
-            try:
-                new_acc_num = int(new_acc_num_input)
-            except ValueError:
-                sg.popup(f"Bad account, '{new_acc_num_input}' not a number!")
-                continue
-            if new_acc_num <= 1000 or new_acc_num > 9999:
-                sg.popup(f"Bad account, '{new_acc_num}' outside accepted range (1000 - 9999)!")
-                continue
-            if account_list.find_account(new_acc_num):
-                sg.popup(f"Bad account, '{new_acc_num}' already exists!")
-                continue
-            new_acc_desc = sg.popup_get_text("Add new account description")
-            new_acc = Account(new_acc_num, new_acc_desc)
-            account_list.add_account(new_acc)
-            account_list.save_accounts()
-            ret = True
-            break
-
-        if "_delete_acc" in event:
-            match = ROW_REGEX.match(event)
-            assert match, f"Bad event '{event}'"
-            idx = int(match.group('row'))
-            acc = account_list.get_accounts()[idx]
-            ok = sg.popup_ok_cancel(f"Remove account {acc.account_number}?")
-            if ok == "OK":
-                account_list.remove_account(acc)
-                account_list.save_accounts()
-                ret = True
-                break
-
-    window.close()
-    return ret
+    return sg.Window('ALOPcounting Accounts', layout, size=(1000, 500), finalize=True, resizable=True)
 
 
-def main_window_loop():
-    # All the stuff inside your window.
+def create_main_window() -> sg.Window:
     layout = [
-        [sg.Text('ALOPcounting')],
-        [sg.Text("Number of verifications:"), sg.Text("?", key="num_verifications")],
-        [sg.Text("Number of accounts:"), sg.Text("?", key="num_accounts")],
-        [sg.Button('Show accounts')],
-        [sg.Button('Show verifications')],
-        [sg.Button('Quit')],
+        [sg.Text('ALOPcounting', font="Any 18")],
+        [sg.Text('A simple open-source accounting programs, useful for smaller organizations.', font="Any 11 italic")],
+        [sg.HorizontalSeparator()],
+        [sg.Text("Number of verifications:"), sg.Text(account_list.len, key="num_verifications")],
+        [sg.Text("Number of accounts:"), sg.Text(verification_list.len, key="num_accounts")],
+        [sg.Button('Show accounts', size=(15, None))],
+        [sg.Button('Show verifications', size=(15, None))],
+        [sg.Text('')],
+        [sg.Push(), sg.Button('Quit', size=(10, None))],
     ]
 
     # Create the Window
-    window = sg.Window('ALOPcounting MAIN', layout, finalize=True, resizable=True)
+    return sg.Window('ALOPcounting Main', layout, finalize=True, resizable=True)
+
+
+def main_loop():
+    main_window = create_main_window()
+    accounts_window = None
+    verifications_window = None
+
+    current_ver_idx = 0
+    ver_num_rows = 0
+    repopulate_ver = True
+
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
-        window["num_accounts"].update(account_list.len)
-        window["num_verifications"].update(verification_list.len)
-        event, values = window.read()
-        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
-            break
-        if event == 'Show verifications':
-            verifications_window_loop()
-        if event == 'Show accounts':
-            while accounts_window_loop():
-                pass
+        # Update values
+        main_window["num_accounts"].update(account_list.len)
+        main_window["num_verifications"].update(verification_list.len)
+        if verification_list.len:
+            ver = verification_list.get_verification_at(current_ver_idx)
+        else:
+            ver = Verification(0) # Fake verification
 
-    window.close()
+        if verifications_window is not None:
+            if repopulate_ver and verification_list.len:
+                populate_verification_layout(verifications_window, current_ver_idx)
+                ver_num_rows = len(ver.transactions)
+            repopulate_ver = False
+
+            if ver_num_rows >= MAX_ROWS:
+                verifications_window['add_row'].update(disabled=True)
+            else:
+                verifications_window['add_row'].update(disabled=False)
+
+            if ver.discarded:
+                verifications_window["discard_indicator"].update("DISCARDED")
+                verifications_window["discard_ver"].update("Un-discard verification")
+            else:
+                verifications_window["discard_indicator"].update("")
+                verifications_window["discard_ver"].update("Discard verification")
+
+        # Read the event
+        window, event, values = sg.read_all_windows()
+        if window is None:
+            sg.popup_error("read_all_windwos returned window == None ??!?")
+            break
+
+        # Main window
+        if window == main_window:
+            print("main_window", event)
+            if event == sg.WIN_CLOSED or event == 'Quit':
+                # Close all windows
+                if accounts_window is None and verifications_window is None:
+                    main_window.close()
+                    break
+                sg.popup("Close accounts and verifications windows first!")
+            elif event == 'Show verifications' and verifications_window is None:
+                verifications_window = create_verifications_window()
+            elif event == 'Show accounts' and accounts_window is None:
+                accounts_window = create_accounts_window()
+
+        # Accounts window
+        elif window == accounts_window:
+            print("accounts_window", event)
+            if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
+                accounts_window.close()
+                accounts_window = None
+
+            elif event == 'new_acc':
+                new_acc_num_input = sg.popup_get_text("Add new account number")
+                try:
+                    new_acc_num = int(new_acc_num_input)
+                except ValueError:
+                    sg.popup(f"Bad account, '{new_acc_num_input}' not a number!")
+                    continue
+                if new_acc_num <= 1000 or new_acc_num > 9999:
+                    sg.popup(f"Bad account, '{new_acc_num}' outside accepted range (1000 - 9999)!")
+                    continue
+                if account_list.find_account(new_acc_num):
+                    sg.popup(f"Bad account, '{new_acc_num}' already exists!")
+                    continue
+                new_acc_desc = sg.popup_get_text("Add new account description")
+                new_acc = Account(new_acc_num, new_acc_desc)
+                account_list.add_account(new_acc)
+                account_list.save_accounts()
+                # Reopen window to repopulate
+                accounts_window.close()
+                accounts_window = create_accounts_window()
+
+            elif "_delete_acc" in event:
+                match = ROW_REGEX.match(event)
+                assert match, f"Bad event '{event}'"
+                idx = int(match.group('row'))
+                acc = account_list.get_accounts()[idx]
+                ok = sg.popup_ok_cancel(f"Remove account {acc.account_number}?")
+                if ok == "OK":
+                    account_list.remove_account(acc)
+                    account_list.save_accounts()
+                    # Reopen window to repopulate
+                    accounts_window.close()
+                    accounts_window = create_accounts_window()
+
+        # Verifications window
+        elif window == verifications_window:
+            print("verifications_window", event)
+            if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
+                ok = "OK"
+                if not cmp_verification_and_layout(ver, values):
+                    ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes and quit?")
+                if ok == "OK":
+                    verification_list.save_verifications()
+                    verifications_window.close()
+                    verifications_window = None
+                    current_ver_idx = 0
+                    ver_num_rows = 0
+                    repopulate_ver = True
+
+            elif event == 'next':
+                ok = "OK"
+                if not cmp_verification_and_layout(ver, values):
+                    ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
+                if ok == "OK":
+                    current_ver_idx += 1
+                    repopulate_ver = True
+
+            elif event == 'prev':
+                ok = "OK"
+                if not cmp_verification_and_layout(ver, values):
+                    ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
+                if ok == "OK":
+                    current_ver_idx -= 1
+                    repopulate_ver = True
+
+            elif event == 'validate':
+                if store_verification_from_layout(ver, values):
+                    repopulate_ver = True
+
+            elif event == "discard_ver":
+                if store_verification_from_layout(ver, values):
+                    ver.discarded = not ver.discarded
+                    repopulate_ver = True
+
+            elif "_delete" in event:
+                match = ROW_REGEX.match(event)
+                assert match, f"Bad event '{event}'"
+                [verifications_window[f"row{match.group('row')}_{col}"].update('') for col in COLS.keys()]
+
+            elif event == "add_row":
+                ver_num_rows += 1
+                verifications_window[f"row{ver_num_rows - 1}_idx"].update(visible=True)
+                [verifications_window[f"row{ver_num_rows - 1}_{col}"].update(visible=True) for col in COLS.keys()]
+                verifications_window[f"row{ver_num_rows - 1}_delete"].update(visible=True)
+
+            elif event == "new_ver":
+                ok = "OK"
+                if not cmp_verification_and_layout(ver, values):
+                    ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
+                if ok == "OK":
+                    current_ver_idx = verification_list.len
+                    ver = Verification(id=current_ver_idx)
+                    verification_list.add_verification(ver)
+                    repopulate_ver = True
 
 
 def create_html(filename: str):
@@ -419,7 +433,7 @@ def create_html(filename: str):
 def main():
     sg.theme('DarkAmber')
 
-    main_window_loop()
+    main_loop()
 
     # create_html("content.html")
     # webbrowser.open_new_tab("content.html")
