@@ -4,6 +4,7 @@ from typing import Any
 from account import Account, account_list
 from transaction import Transaction
 from verification import Verification, verification_list
+from balance import get_transactions_for_account
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
@@ -122,27 +123,37 @@ def cmp_verification_and_layout(verification: Verification, values: dict[str: st
     return True
 
 
+def alternative_background_color() -> str:
+    bg = int(sg.theme_background_color()[1:], base=16)
+    alt_bg = bg + 0x101010
+    return f"#{hex(alt_bg)[2:]}"
+
+
 def get_column_layout() -> list[list[Any]]:
-    columm_layout = [
-        [sg.Text("", size=(4, 1))] +
-        [sg.Text(COLS["acc"].name, justification='left', size=COLS["acc"].size[0] + 1, pad=(1,1), border_width=0,)] +
-        [sg.Text(COLS["des"].name, justification='left', size=COLS["des"].size[0], pad=(1,1), border_width=0,)] +
-        [sg.Text(COLS["deb"].name, justification='left', size=COLS["deb"].size[0] - 2, pad=(1,1), border_width=0,)] +
-        [sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size[0] - 1, pad=(1,1), border_width=0,)] +
-        [sg.Text(COLS["not"].name, justification='left', size=COLS["not"].size[0] - 4, pad=(1,1), border_width=0,)] +
-        [sg.Text("", size=(3, 0))]
-    ]
-    columm_layout += [
-        [sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx")] +
-        [sg.Combo(values=[acc.account_number for acc in account_list], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc")] +
-        [sg.Text(size=COLS["des"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_des")] +
-        [sg.InputText(size=COLS["deb"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_deb")] +
-        [sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre")] +
-        [sg.InputText(size=COLS["not"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_not")] +
-        [sg.Button("X", key=f"row{row}_delete", pad=(3, 0))]
-        for row in range(MAX_ROWS)
-    ]
-    return columm_layout
+    header = sg.Column([[
+        sg.Text("", size=(4, 1)),
+        sg.Text(COLS["acc"].name, justification='left', size=COLS["acc"].size[0] + 1, pad=(1,1), border_width=0,),
+        sg.Text(COLS["des"].name, justification='left', size=COLS["des"].size[0], pad=(1,1), border_width=0,),
+        sg.Text(COLS["deb"].name, justification='left', size=COLS["deb"].size[0] - 2, pad=(1,1), border_width=0,),
+        sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size[0] - 1, pad=(1,1), border_width=0,),
+        sg.Text(COLS["not"].name, justification='left', size=COLS["not"].size[0] - 4, pad=(1,1), border_width=0,),
+        sg.Text("", size=(3, 0)),
+    ], [sg.HorizontalSeparator()]])
+
+    column_layout = []
+    for row in range(MAX_ROWS):
+        color = alternative_background_color() if row % 2 else sg.theme_background_color()
+        column_layout += [[sg.Column([[
+            sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx", background_color=color),
+            sg.Combo(values=[acc.account_number for acc in account_list], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc"),
+            sg.Text(size=COLS["des"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_des", background_color=color),
+            sg.InputText(size=COLS["deb"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_deb"),
+            sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre"),
+            sg.InputText(size=COLS["not"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_not"),
+            sg.Button("X", key=f"row{row}_delete", pad=(3, 0)),
+        ]], background_color=color)]]
+
+    return [header], [sg.Column(column_layout, scrollable=True, vertical_scroll_only=True, size=(1000, 300), key="ver_col")]
 
 
 def get_accumulation_layout() -> list[list[Any]]:
@@ -158,20 +169,51 @@ def get_accumulation_layout() -> list[list[Any]]:
 
 
 def get_accounts_column_layout() -> list[list[Any]]:
-    columm_layout = [
-        [sg.Text("", size=(4, 1))] +
-        [sg.Text("Account", justification='left', size=(6, 1), pad=(1,1), border_width=0,)] +
-        [sg.Text("Description", justification='left', size=(80, 1), pad=(1,1), border_width=0,)] +
-        [sg.Text("", size=(3, 0))],
-    ]
+    header = sg.Column([[
+        sg.Text("", size=(4, 1)),
+        sg.Text("Account", justification='left', size=(6, 1), pad=(1,1), border_width=0,),
+        sg.Text("Description", justification='left', size=(70, 1), pad=(1,1), border_width=0,),
+        sg.Text("", size=(15, 0)),
+        sg.Text("", size=(3, 0)),
+    ], [sg.HorizontalSeparator()]])
+
+    column_layout = []
     for row, acc in enumerate(account_list):
-        columm_layout += [
-            [sg.Text("", size=(4, 1))] +
-            [sg.Text(acc.account_number, justification='left', size=(6, 1), pad=(1,1), border_width=0,)] +
-            [sg.Text(acc.description, justification='left', size=(80, 1), pad=(1,1), border_width=0,)] +
-            [sg.Button("X", key=f"row{row}_delete_acc", pad=(3, 0))],
-        ]
-    return columm_layout
+        color = alternative_background_color() if row % 2 else sg.theme_background_color()
+        column_layout += [[sg.Column([[
+            sg.Text("", size=(4, 1), background_color=color),
+            sg.Text(acc.account_number, justification='left', size=(6, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Text(acc.description, justification='left', size=(70, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Button("Transactions", key=f"row{row}_acc_show_transactions", pad=(15, 0)),
+            sg.Button("X", key=f"row{row}_delete_acc", pad=(3, 0)),
+        ]], background_color=color)]]
+
+    return [header], [sg.Column(column_layout, scrollable=True, vertical_scroll_only=True, size=(800, 400), key="acc_col")]
+
+
+def get_account_transactions_column_layout(account: Account) -> list[list[Any]]:
+    header = sg.Column([[
+        sg.Text("", size=(4, 1)),
+        sg.Text("Verification", justification='left', size=(15, 1), pad=(1,1), border_width=0,),
+        sg.Text("Date", justification='left', size=(15, 1), pad=(1,1), border_width=0,),
+        sg.Text(COLS["deb"].name, justification='left', size=COLS["deb"].size[0], pad=(3,1), border_width=0,),
+        sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size[0], pad=(3,1), border_width=0,),
+        sg.Text("", size=(6, 1)),
+    ], [sg.HorizontalSeparator()]])
+
+    column_layout = []
+    for row, (trans, ver) in enumerate(get_transactions_for_account(account)):
+        color = alternative_background_color() if row % 2 else sg.theme_background_color()
+        column_layout += [[sg.Column([[
+            sg.Text("", size=(4, 1), background_color=color),
+            sg.Text(ver.id, justification='left', size=(15, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Text(str(ver.date), justification='left', size=(15, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Text(trans.debit, justification='right', size=COLS["deb"].size[0], pad=(3,1), border_width=0, background_color=color),
+            sg.Text(trans.credit, justification='right', size=COLS["cre"].size[0], pad=(3,1), border_width=0, background_color=color),
+            sg.Text("", size=(6, 1), background_color=color),
+        ]], background_color=color)]]
+
+    return [header], [sg.Column(column_layout, scrollable=True, vertical_scroll_only=True, size=(None, 400), key="trans_acc_col")]
 
 
 ROW_REGEX = re.compile(r'row(?P<row>\d+)_\w+')
@@ -199,7 +241,7 @@ def create_verifications_window() -> sg.Window:
             sg.Button('Quit', pad=((4, 4), (4, 4)))
         ],
         [sg.Button("Add row", key="add_row", pad=(0, 1))],
-        [sg.Column(get_column_layout(), scrollable=True, vertical_scroll_only=True, size=(1000, 300), key="ver_col")],
+        get_column_layout(),
         [sg.HorizontalSeparator()],
         [sg.Column(get_accumulation_layout(), key="accumulation_col")],
     ]
@@ -219,10 +261,26 @@ def create_accounts_window() -> sg.Window:
             sg.Button('New account', key="new_acc", pad=((0, 4), (4, 4))),
             sg.Button('Quit', pad=((4, 4), (4, 4)))
         ],
-        [sg.Column(get_accounts_column_layout(), scrollable=True, vertical_scroll_only=True, size=(800, 400), key="acc_col")],
+        get_accounts_column_layout(),
     ]
 
     return sg.Window('ALOPcounting Accounts', layout, size=(1000, 500), finalize=True, resizable=True)
+
+
+def create_account_transactions_window(account: Account) -> sg.Window:
+    sg.set_options(element_padding=(0, 0))
+
+    layout = [
+        [
+            sg.Text(f'Transactions for account: {account.account_number}', font='Any 18'),
+        ],
+        [sg.HorizontalSeparator()],
+        [sg.Text(account.description)],
+        [sg.Button('Quit', pad=((0, 4), (4, 4)))],
+        get_account_transactions_column_layout(account),
+    ]
+
+    return sg.Window('ALOPcounting Transactions for Account', layout, size=(600, 500), finalize=True, resizable=True)
 
 
 def create_main_window() -> sg.Window:
@@ -246,6 +304,7 @@ def main_loop():
     main_window = create_main_window()
     accounts_window = None
     verifications_window = None
+    account_transactions_window = None
 
     current_ver_idx = 0
     ver_num_rows = 0
@@ -340,6 +399,17 @@ def main_loop():
                     accounts_window.close()
                     accounts_window = create_accounts_window()
 
+            elif "_acc_show_transactions" in event:
+                match = ROW_REGEX.match(event)
+                assert match, f"Bad event '{event}'"
+                idx = int(match.group('row'))
+                acc = account_list.get_accounts()[idx]
+                if account_transactions_window is not None:
+                    # Close and reopen with new account
+                    account_transactions_window.close()
+                account_transactions_window = create_account_transactions_window(acc)
+
+
         # Verifications window
         elif window == verifications_window:
             print("verifications_window", event)
@@ -400,6 +470,13 @@ def main_loop():
                     ver = Verification(id=current_ver_idx)
                     verification_list.add_verification(ver)
                     repopulate_ver = True
+
+        # Transactions for account window
+        elif window == account_transactions_window:
+            print("account_transactions_window", event)
+            if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks quit
+                account_transactions_window.close()
+                account_transactions_window = None
 
 
 def create_html(filename: str):

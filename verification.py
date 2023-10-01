@@ -7,13 +7,6 @@ from transaction import Transaction
 
 
 @dc.dataclass
-class Datetime:
-    year: int
-    month: int
-    day: int
-
-
-@dc.dataclass
 class Verification:
     id: int
     date: datetime.date = dc.field(default_factory=datetime.date.today)
