@@ -4,7 +4,7 @@ from typing import Any
 from account import Account, account_list
 from transaction import Transaction
 from verification import Verification, verification_list
-from balance import get_transactions_for_account
+from balance import get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
@@ -21,8 +21,8 @@ class ColInfo:
 COLS = {
     "acc": ColInfo("Account", (10, 1)),
     "des": ColInfo("Description", (30, 1)),
-    "deb": ColInfo("Debet", (10, 1)),
-    "cre": ColInfo("Kredit", (10, 1)),
+    "deb": ColInfo("Debit", (10, 1)),
+    "cre": ColInfo("Credit", (10, 1)),
     "not": ColInfo("Notes", (50, 1)),
 }
 MAX_ROWS = 20
@@ -172,7 +172,8 @@ def get_accounts_column_layout() -> list[list[Any]]:
     header = sg.Column([[
         sg.Text("", size=(4, 1)),
         sg.Text("Account", justification='left', size=(6, 1), pad=(1,1), border_width=0,),
-        sg.Text("Description", justification='left', size=(70, 1), pad=(1,1), border_width=0,),
+        sg.Text("Description", justification='left', size=(60, 1), pad=(1,1), border_width=0,),
+        sg.Text("Balance", justification='left', size=(10, 1), pad=(1,1), border_width=0,),
         sg.Text("", size=(15, 0)),
         sg.Text("", size=(3, 0)),
     ], [sg.HorizontalSeparator()]])
@@ -183,7 +184,8 @@ def get_accounts_column_layout() -> list[list[Any]]:
         column_layout += [[sg.Column([[
             sg.Text("", size=(4, 1), background_color=color),
             sg.Text(acc.account_number, justification='left', size=(6, 1), pad=(1,1), border_width=0, background_color=color),
-            sg.Text(acc.description, justification='left', size=(70, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Text(acc.description, justification='left', size=(60, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Text(get_balance_for_account(acc), justification='right', size=(10, 1), pad=(1,4), border_width=0, background_color=color),
             sg.Button("Transactions", key=f"row{row}_acc_show_transactions", pad=(15, 0)),
             sg.Button("X", key=f"row{row}_delete_acc", pad=(3, 0)),
         ]], background_color=color)]]
@@ -198,11 +200,14 @@ def get_account_transactions_column_layout(account: Account) -> list[list[Any]]:
         sg.Text("Date", justification='left', size=(15, 1), pad=(1,1), border_width=0,),
         sg.Text(COLS["deb"].name, justification='left', size=COLS["deb"].size[0], pad=(3,1), border_width=0,),
         sg.Text(COLS["cre"].name, justification='left', size=COLS["cre"].size[0], pad=(3,1), border_width=0,),
+        sg.Text("Balance", justification='left', size=(10, 1), pad=(1,1), border_width=0,),
         sg.Text("", size=(6, 1)),
     ], [sg.HorizontalSeparator()]])
 
     column_layout = []
+    balance = 0.0
     for row, (trans, ver) in enumerate(get_transactions_for_account(account)):
+        balance += (trans.debit - trans.credit) * (-1 if account.is_debt or account.is_income else 1)
         color = alternative_background_color() if row % 2 else sg.theme_background_color()
         column_layout += [[sg.Column([[
             sg.Text("", size=(4, 1), background_color=color),
@@ -210,6 +215,7 @@ def get_account_transactions_column_layout(account: Account) -> list[list[Any]]:
             sg.Text(str(ver.date), justification='left', size=(15, 1), pad=(1,1), border_width=0, background_color=color),
             sg.Text(trans.debit, justification='right', size=COLS["deb"].size[0], pad=(3,1), border_width=0, background_color=color),
             sg.Text(trans.credit, justification='right', size=COLS["cre"].size[0], pad=(3,1), border_width=0, background_color=color),
+            sg.Text(balance, justification='right', size=(10, 1), pad=(1,1), border_width=0, background_color=color),
             sg.Text("", size=(6, 1), background_color=color),
         ]], background_color=color)]]
 
@@ -367,12 +373,14 @@ def main_loop():
 
             elif event == 'new_acc':
                 new_acc_num_input = sg.popup_get_text("Add new account number")
+                if new_acc_num_input is None:
+                    continue
                 try:
                     new_acc_num = int(new_acc_num_input)
                 except ValueError:
                     sg.popup(f"Bad account, '{new_acc_num_input}' not a number!")
                     continue
-                if new_acc_num <= 1000 or new_acc_num > 9999:
+                if new_acc_num < 1000 or new_acc_num > 9999:
                     sg.popup(f"Bad account, '{new_acc_num}' outside accepted range (1000 - 9999)!")
                     continue
                 if account_list.find_account(new_acc_num):

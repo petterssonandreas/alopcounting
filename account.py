@@ -9,6 +9,22 @@ class Account:
     account_number: int
     description: str
 
+    @property
+    def is_asset(self):
+        return 1000 <= self.account_number < 2000
+
+    @property
+    def is_debt(self):
+        return 2000 <= self.account_number < 3000
+
+    @property
+    def is_income(self):
+        return 3000 <= self.account_number < 4000
+
+    @property
+    def is_cost(self):
+        return self.account_number >= 4000
+
     def __lt__(self, other):
         return self.account_number < other.account_number
 

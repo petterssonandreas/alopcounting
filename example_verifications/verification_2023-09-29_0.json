@@ -15,9 +15,20 @@
             "credit": 0.0,
             "notes": "",
             "__dataclass__": "transaction.Transaction"
+        },
+        {
+            "account": {
+                "account_number": 1930,
+                "description": "Företagskonto / affärskonto",
+                "__dataclass__": "account.Account"
+            },
+            "debit": 0.0,
+            "credit": 255.0,
+            "notes": "",
+            "__dataclass__": "transaction.Transaction"
         }
     ],
     "notes": "",
-    "discarded": true,
+    "discarded": false,
     "__dataclass__": "verification.Verification"
 }
