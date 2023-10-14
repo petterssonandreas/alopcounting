@@ -1,7 +1,6 @@
 import dataclasses as dc
 import datetime
 from pathlib import Path
-from os import makedirs
 
 from config import config_get_verifications_storage_dir_path
 from dataclass_json import dataclass_json_dumps, dataclass_json_loads
@@ -38,7 +37,7 @@ class Verification:
 
 
 class VerificationList:
-    def __init__(self, verifications_dir: str):
+    def __init__(self, verifications_dir: str | Path):
         self._verifications_dir = verifications_dir
         self._verifications = self._load_verifications()
         self._index = 0
@@ -59,9 +58,6 @@ class VerificationList:
         verifications: list[Verification] = []
 
         dir = Path(self._verifications_dir)
-        if not dir.exists():
-            print(f"Creating verification dir: {dir.absolute()}")
-            makedirs(dir)
         assert dir.exists(), f"{dir}: no such path"
         assert dir.is_dir(), f"{dir}: not a directory"
 

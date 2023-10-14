@@ -1,5 +1,4 @@
-[accounts]
-storage_file_path = "./accounts.json"
-
-[verifications]
-storage_dir_path = "./example_verifications/"
+[userdata]
+userdata_storage_path = "./userdata"
+accounts_filename = "accounts.json"
+verifications_dirname = "verifications"

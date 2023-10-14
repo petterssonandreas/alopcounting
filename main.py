@@ -5,7 +5,7 @@ from account import Account, account_list, account_list_init
 from transaction import Transaction
 from verification import Verification, verification_list, verification_list_init
 from balance import get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
-from config import config_init
+from config import config_init, config_do_git_commit
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
@@ -526,6 +526,8 @@ def main():
     verification_list_init()
 
     main_loop()
+
+    config_do_git_commit("EXIT - Commit accounts and verifications")
 
     # create_html("content.html")
     # webbrowser.open_new_tab("content.html")

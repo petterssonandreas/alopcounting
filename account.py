@@ -34,7 +34,7 @@ class Account:
 
 
 class AccountList:
-    def __init__(self, accounts_filename: str):
+    def __init__(self, accounts_filename: str | Path):
         self._accounts_filename = accounts_filename
         self._accounts = self._load_accounts()
         self._index = 0
