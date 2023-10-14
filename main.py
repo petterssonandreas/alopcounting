@@ -1,10 +1,11 @@
 
 import re
 from typing import Any
-from account import Account, account_list
+from account import Account, account_list, account_list_init
 from transaction import Transaction
-from verification import Verification, verification_list
+from verification import Verification, verification_list, verification_list_init
 from balance import get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
+from config import config_init
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
@@ -29,7 +30,7 @@ MAX_ROWS = 20
 
 
 def populate_verification_layout(window: sg.Window, current_ver_idx: int):
-    ver = verification_list.get_verification_at(current_ver_idx)
+    ver = verification_list().get_verification_at(current_ver_idx)
     window["ver_id"].update(ver.id)
     window["ver_date"].update(ver.date)
 
@@ -37,7 +38,7 @@ def populate_verification_layout(window: sg.Window, current_ver_idx: int):
         window['prev'].update(disabled=True)
     else:
         window['prev'].update(disabled=False)
-    if current_ver_idx == (verification_list.len - 1):
+    if current_ver_idx == (verification_list().len - 1):
         window['next'].update(disabled=True)
     else:
         window['next'].update(disabled=False)
@@ -76,7 +77,7 @@ def get_transactions_from_layout(values: dict[str: str]) -> list[Transaction] | 
         credit = 0.0
 
         acc_val = vals[f"row{row}_acc"]
-        acc = account_list.find_account(acc_val)
+        acc = account_list().find_account(acc_val)
         if not acc:
             sg.popup(f"Row {row}: No account with number '{acc_val}'!")
             return None
@@ -145,7 +146,7 @@ def get_column_layout() -> list[list[Any]]:
         color = alternative_background_color() if row % 2 else sg.theme_background_color()
         column_layout += [[sg.Column([[
             sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx", background_color=color),
-            sg.Combo(values=[acc.account_number for acc in account_list], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc"),
+            sg.Combo(values=[acc.account_number for acc in account_list()], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc"),
             sg.Text(size=COLS["des"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_des", background_color=color),
             sg.InputText(size=COLS["deb"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_deb"),
             sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre"),
@@ -179,7 +180,7 @@ def get_accounts_column_layout() -> list[list[Any]]:
     ], [sg.HorizontalSeparator()]])
 
     column_layout = []
-    for row, acc in enumerate(account_list):
+    for row, acc in enumerate(account_list()):
         color = alternative_background_color() if row % 2 else sg.theme_background_color()
         column_layout += [[sg.Column([[
             sg.Text("", size=(4, 1), background_color=color),
@@ -294,8 +295,8 @@ def create_main_window() -> sg.Window:
         [sg.Text('ALOPcounting', font="Any 18")],
         [sg.Text('A simple open-source accounting programs, useful for smaller organizations.', font="Any 11 italic")],
         [sg.HorizontalSeparator()],
-        [sg.Text("Number of verifications:"), sg.Text(account_list.len, key="num_verifications")],
-        [sg.Text("Number of accounts:"), sg.Text(verification_list.len, key="num_accounts")],
+        [sg.Text("Number of verifications:"), sg.Text(account_list().len, key="num_verifications")],
+        [sg.Text("Number of accounts:"), sg.Text(verification_list().len, key="num_accounts")],
         [sg.Button('Show accounts', size=(15, None))],
         [sg.Button('Show verifications', size=(15, None))],
         [sg.Text('')],
@@ -319,15 +320,15 @@ def main_loop():
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         # Update values
-        main_window["num_accounts"].update(account_list.len)
-        main_window["num_verifications"].update(verification_list.len)
-        if verification_list.len:
-            ver = verification_list.get_verification_at(current_ver_idx)
+        main_window["num_accounts"].update(account_list().len)
+        main_window["num_verifications"].update(verification_list().len)
+        if verification_list().len:
+            ver = verification_list().get_verification_at(current_ver_idx)
         else:
             ver = Verification(0) # Fake verification
 
         if verifications_window is not None:
-            if repopulate_ver and verification_list.len:
+            if repopulate_ver and verification_list().len:
                 populate_verification_layout(verifications_window, current_ver_idx)
                 ver_num_rows = len(ver.transactions)
             repopulate_ver = False
@@ -383,13 +384,13 @@ def main_loop():
                 if new_acc_num < 1000 or new_acc_num > 9999:
                     sg.popup(f"Bad account, '{new_acc_num}' outside accepted range (1000 - 9999)!")
                     continue
-                if account_list.find_account(new_acc_num):
+                if account_list().find_account(new_acc_num):
                     sg.popup(f"Bad account, '{new_acc_num}' already exists!")
                     continue
                 new_acc_desc = sg.popup_get_text("Add new account description")
                 new_acc = Account(new_acc_num, new_acc_desc)
-                account_list.add_account(new_acc)
-                account_list.save_accounts()
+                account_list().add_account(new_acc)
+                account_list().save_accounts()
                 # Reopen window to repopulate
                 accounts_window.close()
                 accounts_window = create_accounts_window()
@@ -398,11 +399,11 @@ def main_loop():
                 match = ROW_REGEX.match(event)
                 assert match, f"Bad event '{event}'"
                 idx = int(match.group('row'))
-                acc = account_list.get_accounts()[idx]
+                acc = account_list().get_accounts()[idx]
                 ok = sg.popup_ok_cancel(f"Remove account {acc.account_number}?")
                 if ok == "OK":
-                    account_list.remove_account(acc)
-                    account_list.save_accounts()
+                    account_list().remove_account(acc)
+                    account_list().save_accounts()
                     # Reopen window to repopulate
                     accounts_window.close()
                     accounts_window = create_accounts_window()
@@ -411,7 +412,7 @@ def main_loop():
                 match = ROW_REGEX.match(event)
                 assert match, f"Bad event '{event}'"
                 idx = int(match.group('row'))
-                acc = account_list.get_accounts()[idx]
+                acc = account_list().get_accounts()[idx]
                 if account_transactions_window is not None:
                     # Close and reopen with new account
                     account_transactions_window.close()
@@ -426,7 +427,7 @@ def main_loop():
                 if not cmp_verification_and_layout(ver, values):
                     ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes and quit?")
                 if ok == "OK":
-                    verification_list.save_verifications()
+                    verification_list().save_verifications()
                     verifications_window.close()
                     verifications_window = None
                     current_ver_idx = 0
@@ -474,9 +475,9 @@ def main_loop():
                 if not cmp_verification_and_layout(ver, values):
                     ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
                 if ok == "OK":
-                    current_ver_idx = verification_list.len
+                    current_ver_idx = verification_list().len
                     ver = Verification(id=current_ver_idx)
-                    verification_list.add_verification(ver)
+                    verification_list().add_verification(ver)
                     repopulate_ver = True
 
         # Transactions for account window
@@ -506,7 +507,7 @@ def create_html(filename: str):
                 with dt.tr():
                     dt.th("Account", style="min-width: 100px")
                     dt.th("Description", style="min-width: 100px")
-                for acc in account_list:
+                for acc in account_list():
                     with dt.tr():
                         dt.td(acc.account_number)
                         dt.td(acc.description)
@@ -517,6 +518,12 @@ def create_html(filename: str):
 
 def main():
     sg.theme('DarkAmber')
+
+    if not config_init():
+        sg.popup_error("Failed to load or create config!\n\nCheck logs for more info.")
+        return
+    account_list_init()
+    verification_list_init()
 
     main_loop()
 

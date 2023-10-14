@@ -1,7 +1,9 @@
 import dataclasses as dc
 import datetime
 from pathlib import Path
+from os import makedirs
 
+from config import config_get_verifications_storage_dir_path
 from dataclass_json import dataclass_json_dumps, dataclass_json_loads
 from transaction import Transaction
 
@@ -57,6 +59,9 @@ class VerificationList:
         verifications: list[Verification] = []
 
         dir = Path(self._verifications_dir)
+        if not dir.exists():
+            print(f"Creating verification dir: {dir.absolute()}")
+            makedirs(dir)
         assert dir.exists(), f"{dir}: no such path"
         assert dir.is_dir(), f"{dir}: not a directory"
 
@@ -105,4 +110,15 @@ class VerificationList:
             ver.save_to_file(dir)
 
 
-verification_list = VerificationList("example_verifications")
+_verification_list: VerificationList | None = None
+
+
+def verification_list_init():
+    global _verification_list
+    _verification_list = VerificationList(config_get_verifications_storage_dir_path())
+
+
+def verification_list() -> VerificationList:
+    global _verification_list
+    assert _verification_list is not None
+    return _verification_list

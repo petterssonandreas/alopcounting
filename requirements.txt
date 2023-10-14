@@ -1,2 +1,4 @@
 pysimplegui
 dominate
+gitpython
+tomlkit

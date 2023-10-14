@@ -2,6 +2,7 @@ import dataclasses as dc
 import re
 from pathlib import Path
 from dataclass_json import dataclass_json_loads, dataclass_json_dumps
+from config import config_get_accounts_storage_file_path
 
 
 @dc.dataclass
@@ -100,4 +101,15 @@ class AccountList:
             acc_file.write(dataclass_json_dumps(self._accounts, indent=4))
 
 
-account_list = AccountList("accounts.json")
+_account_list: AccountList | None = None
+
+
+def account_list_init():
+    global _account_list
+    _account_list = AccountList(config_get_accounts_storage_file_path())
+
+
+def account_list() -> AccountList:
+    global _account_list
+    assert _account_list is not None
+    return _account_list
