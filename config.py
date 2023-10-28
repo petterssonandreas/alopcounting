@@ -106,7 +106,7 @@ def config_do_git_commit(msg: str) -> bool:
     else:
         repo = Repo(dir)
 
-    if repo.is_dirty():
+    if repo.is_dirty() or repo.untracked_files:
         repo.index.add(_toml_config["userdata"]["accounts_filename"].value)
         repo.index.add(_toml_config["userdata"]["verifications_dirname"].value)
         repo.index.commit(msg)

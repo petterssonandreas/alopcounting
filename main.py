@@ -3,9 +3,10 @@ import re
 from typing import Any
 from account import Account, account_list, account_list_init
 from transaction import Transaction
-from verification import Verification, verification_list, verification_list_init
+from verification import Verification, verification_list_init
 from balance import get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
 from config import config_init, config_do_git_commit
+from year import year_init, year
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
@@ -30,7 +31,7 @@ MAX_ROWS = 20
 
 
 def populate_verification_layout(window: sg.Window, current_ver_idx: int):
-    ver = verification_list().get_verification_at(current_ver_idx)
+    ver = year().verification_list.get_verification_at(current_ver_idx)
     window["ver_id"].update(ver.id)
     window["ver_date"].update(ver.date)
 
@@ -38,7 +39,7 @@ def populate_verification_layout(window: sg.Window, current_ver_idx: int):
         window['prev'].update(disabled=True)
     else:
         window['prev'].update(disabled=False)
-    if current_ver_idx == (verification_list().len - 1):
+    if current_ver_idx == (year().verification_list.len - 1):
         window['next'].update(disabled=True)
     else:
         window['next'].update(disabled=False)
@@ -295,8 +296,16 @@ def create_main_window() -> sg.Window:
         [sg.Text('ALOPcounting', font="Any 18")],
         [sg.Text('A simple open-source accounting programs, useful for smaller organizations.', font="Any 11 italic")],
         [sg.HorizontalSeparator()],
+        [sg.Text("Year:"), sg.Text("?", key="current_year")],
+        [
+            sg.Button('Prev', key='prev_year', pad=((10, 4), (2, 2))),
+            sg.Button('Next', key='next_year', pad=(4, 2)),
+            sg.VerticalSeparator(),
+            sg.Button('New year', key='new_year', pad=(4, 2))
+        ],
+        [sg.HorizontalSeparator()],
         [sg.Text("Number of verifications:"), sg.Text(account_list().len, key="num_verifications")],
-        [sg.Text("Number of accounts:"), sg.Text(verification_list().len, key="num_accounts")],
+        [sg.Text("Number of accounts:"), sg.Text(year().verification_list.len, key="num_accounts")],
         [sg.Button('Show accounts', size=(15, None))],
         [sg.Button('Show verifications', size=(15, None))],
         [sg.Text('')],
@@ -321,14 +330,15 @@ def main_loop():
     while True:
         # Update values
         main_window["num_accounts"].update(account_list().len)
-        main_window["num_verifications"].update(verification_list().len)
-        if verification_list().len:
-            ver = verification_list().get_verification_at(current_ver_idx)
+        main_window["num_verifications"].update(year().verification_list.len)
+        main_window["current_year"].update(year().year)
+        if year().verification_list.len:
+            ver = year().verification_list.get_verification_at(current_ver_idx)
         else:
             ver = Verification(0) # Fake verification
 
         if verifications_window is not None:
-            if repopulate_ver and verification_list().len:
+            if repopulate_ver and year().verification_list.len:
                 populate_verification_layout(verifications_window, current_ver_idx)
                 ver_num_rows = len(ver.transactions)
             repopulate_ver = False
@@ -364,6 +374,22 @@ def main_loop():
                 verifications_window = create_verifications_window()
             elif event == 'Show accounts' and accounts_window is None:
                 accounts_window = create_accounts_window()
+            elif event == "prev_year":
+                if accounts_window is None and verifications_window is None:
+                    year().goto_prev_year()
+                else:
+                    sg.popup("Close accounts and verifications windows first!")
+            elif event == "next_year":
+                if accounts_window is None and verifications_window is None:
+                    year().goto_next_year()
+                else:
+                    sg.popup("Close accounts and verifications windows first!")
+            elif event == "new_year":
+                if accounts_window is None and verifications_window is None:
+                    year().create_new_year()
+                    year().verification_list.save_verifications()
+                else:
+                    sg.popup("Close accounts and verifications windows first!")
 
         # Accounts window
         elif window == accounts_window:
@@ -427,7 +453,7 @@ def main_loop():
                 if not cmp_verification_and_layout(ver, values):
                     ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes and quit?")
                 if ok == "OK":
-                    verification_list().save_verifications()
+                    year().verification_list.save_verifications()
                     verifications_window.close()
                     verifications_window = None
                     current_ver_idx = 0
@@ -475,9 +501,9 @@ def main_loop():
                 if not cmp_verification_and_layout(ver, values):
                     ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
                 if ok == "OK":
-                    current_ver_idx = verification_list().len
+                    current_ver_idx = year().verification_list.len
                     ver = Verification(id=current_ver_idx)
-                    verification_list().add_verification(ver)
+                    year().verification_list.add_verification(ver)
                     repopulate_ver = True
 
         # Transactions for account window
@@ -524,6 +550,7 @@ def main():
         return
     account_list_init()
     verification_list_init()
+    year_init()
 
     main_loop()
 

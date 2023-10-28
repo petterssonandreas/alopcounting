@@ -1,10 +1,10 @@
-import dataclasses as dc
 from account import Account
-from verification import Verification, verification_list
+from verification import Verification
 from transaction import Transaction
+from year import year
 
 def get_transactions_for_account(account: Account) -> list[tuple[Transaction, Verification]]:
-    return [(trans, ver) for ver in verification_list() for trans in ver.transactions if account == trans.account]
+    return [(trans, ver) for ver in year().verification_list for trans in ver.transactions if account == trans.account]
 
 def get_balance_from_transactions(account: Account, transactions: list[Transaction]) -> float:
     balance = 0.0
