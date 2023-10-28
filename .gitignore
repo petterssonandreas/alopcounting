@@ -3,3 +3,6 @@ dist/*
 venv/*
 __pycache__/*
 userdata/
+userdata/*
+.vscode/*
+pysimpleguitesting/*
