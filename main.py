@@ -14,6 +14,7 @@ import dominate
 import dominate.tags as dt
 import webbrowser
 from _version import __version__
+from datetime import date
 
 @dc.dataclass
 class ColInfo:
@@ -241,7 +242,7 @@ def create_verifications_window() -> sg.Window:
         ],
         [sg.HorizontalSeparator()],
         [sg.Text("Verification:"), sg.Text("?", key="ver_id")],
-        [sg.Text("Date:"), sg.Text("?", key="ver_date")],
+        [sg.Text("Date:"), sg.Text("?", key="ver_date"), sg.Button("Change date", key="ver_date_sel", pad=(10, 0))],
         [sg.Text("", key="discard_indicator", text_color="red", font="bold")],
         [sg.HorizontalSeparator()],
         [
@@ -503,9 +504,24 @@ def main_loop():
                     ok = sg.popup_ok_cancel("Verification has changed and not been saved, discard changes?")
                 if ok == "OK":
                     current_ver_idx = year().verification_list.len
-                    ver = Verification(id=current_ver_idx)
+                    if date.today().year == year().year:
+                        ver = Verification(id=current_ver_idx, date=date.today())
+                    elif ver.date.year == year().year:
+                        ver = Verification(id=current_ver_idx, date=ver.date)
+                    else:
+                        ver = Verification(id=current_ver_idx, date=date(year=year().year, month=1, day=1))
                     year().verification_list.add_verification(ver)
                     repopulate_ver = True
+
+            elif event == "ver_date_sel":
+                new_month, new_day, new_year = sg.popup_get_date(close_when_chosen=True, begin_at_sunday_plus=1, start_year=ver.date.year, start_mon=ver.date.month, start_day=ver.date.day)
+                new_date = date(year=new_year, month=new_month, day=new_day)
+                print("Date selected:", new_date)
+                if new_date.year != year().year:
+                    sg.popup(f"Chosen date not in current year! new_date.year {new_date.year}, year().year {year().year}")
+                    continue
+                ver.date = new_date
+                verifications_window["ver_date"].update(ver.date)
 
         # Transactions for account window
         elif window == account_transactions_window:
