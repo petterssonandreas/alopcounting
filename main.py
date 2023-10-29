@@ -13,6 +13,7 @@ import dataclasses as dc
 import dominate
 import dominate.tags as dt
 import webbrowser
+from _version import __version__
 
 @dc.dataclass
 class ColInfo:
@@ -543,6 +544,8 @@ def create_html(filename: str):
 
 
 def main():
+    print(f"Running ALOPCounting, version: {__version__}")
+
     sg.theme('DarkAmber')
 
     if not config_init():

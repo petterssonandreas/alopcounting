@@ -4,6 +4,7 @@ from verification import (
     verification_list,
     create_new_verification_list
 )
+from datetime import datetime
 
 
 class Year:
@@ -55,8 +56,14 @@ def year_init():
         raise PermissionError("Year already initialized, not allowed to call again!")
 
     years = verification_lists_years()
-    assert years
-    _year = Year(years[-1])
+    if years:
+        _year = Year(years[-1])
+    else:
+        cur_year = datetime.now().year
+        print(f"No years, create current year: {cur_year}")
+        create_new_verification_list(cur_year)
+        _year = Year(cur_year)
+        _year.verification_list.save_verifications()
 
 
 def year() -> Year:
