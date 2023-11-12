@@ -441,8 +441,8 @@ def main_loop():
                 assert match, f"Bad event '{event}'"
                 idx = int(match.group('row'))
                 acc = year().account_list.get_accounts()[idx]
-                if account_has_transactions(acc):
-                    sg.popup(f"Account {acc.account_number} has transactions, not allowed to be removed!")
+                if account_has_transactions(acc) or get_balance_for_account(acc) != 0:
+                    sg.popup(f"Account {acc.account_number} has transactions or a non-zero balance, not allowed to be removed!")
                     continue
                 ok = sg.popup_ok_cancel(f"Remove account {acc.account_number}?")
                 if ok == "OK":
