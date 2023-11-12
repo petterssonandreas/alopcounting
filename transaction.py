@@ -4,7 +4,7 @@ from account import Account
 
 @dc.dataclass
 class Transaction:
-    account: Account
+    account_number: int
     debit: float
     credit: float
     notes: str = ""

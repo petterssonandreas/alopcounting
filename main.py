@@ -1,10 +1,10 @@
 
 import re
 from typing import Any
-from account import Account, account_list, account_list_init
+from account import Account, account_list_init
 from transaction import Transaction
 from verification import Verification, verification_list_init
-from balance import get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
+from balance import account_has_transactions, get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
 from config import config_init, config_do_git_commit
 from year import year_init, year
 import PySimpleGUI as sg
@@ -54,8 +54,8 @@ def populate_verification_layout(window: sg.Window, current_ver_idx: int):
     [window[f"row{row}_delete"].update(visible=(row < num_rows)) for row in range(MAX_ROWS)]
 
     for i, trans in enumerate(ver.transactions):
-        window[f"row{i}_acc"].update(trans.account.account_number)
-        window[f"row{i}_des"].update(trans.account.description)
+        window[f"row{i}_acc"].update(trans.account_number)
+        window[f"row{i}_des"].update(year().account_list.find_account(trans.account_number).description)
         window[f"row{i}_deb"].update(trans.debit)
         window[f"row{i}_cre"].update(trans.credit)
         window[f"row{i}_not"].update(trans.notes)
@@ -80,7 +80,7 @@ def get_transactions_from_layout(values: dict[str: str]) -> list[Transaction] | 
         credit = 0.0
 
         acc_val = vals[f"row{row}_acc"]
-        acc = account_list().find_account(acc_val)
+        acc = year().account_list.find_account(acc_val)
         if not acc:
             sg.popup(f"Row {row}: No account with number '{acc_val}'!")
             return None
@@ -149,7 +149,7 @@ def get_column_layout() -> list[list[Any]]:
         color = alternative_background_color() if row % 2 else sg.theme_background_color()
         column_layout += [[sg.Column([[
             sg.Text(str(row), size=(4, 1), justification='right', key=f"row{row}_idx", background_color=color),
-            sg.Combo(values=[acc.account_number for acc in account_list()], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc"),
+            sg.Combo(values=[acc.account_number for acc in year().account_list], size=COLS["acc"].size, pad=(1,1), key=f"row{row}_acc"),
             sg.Text(size=COLS["des"].size, pad=(1,1), border_width=0, justification='left', key=f"row{row}_des", background_color=color),
             sg.InputText(size=COLS["deb"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_deb"),
             sg.InputText(size=COLS["cre"].size, pad=(1,1), border_width=0, justification='right', key=f"row{row}_cre"),
@@ -177,24 +177,26 @@ def get_accounts_column_layout() -> list[list[Any]]:
         sg.Text("", size=(4, 1)),
         sg.Text("Account", justification='left', size=(6, 1), pad=(1,1), border_width=0,),
         sg.Text("Description", justification='left', size=(60, 1), pad=(1,1), border_width=0,),
+        sg.Text("Incoming", justification='left', size=(10, 1), pad=(1,1), border_width=0,),
         sg.Text("Balance", justification='left', size=(10, 1), pad=(1,1), border_width=0,),
         sg.Text("", size=(15, 0)),
         sg.Text("", size=(3, 0)),
     ], [sg.HorizontalSeparator()]])
 
     column_layout = []
-    for row, acc in enumerate(account_list()):
+    for row, acc in enumerate(year().account_list):
         color = alternative_background_color() if row % 2 else sg.theme_background_color()
         column_layout += [[sg.Column([[
             sg.Text("", size=(4, 1), background_color=color),
             sg.Text(acc.account_number, justification='left', size=(6, 1), pad=(1,1), border_width=0, background_color=color),
             sg.Text(acc.description, justification='left', size=(60, 1), pad=(1,1), border_width=0, background_color=color),
+            sg.Text(acc.incoming_balance, justification='right', size=(10, 1), pad=(1,4), border_width=0, background_color=color),
             sg.Text(get_balance_for_account(acc), justification='right', size=(10, 1), pad=(1,4), border_width=0, background_color=color),
             sg.Button("Transactions", key=f"row{row}_acc_show_transactions", pad=(15, 0)),
             sg.Button("X", key=f"row{row}_delete_acc", pad=(3, 0)),
         ]], background_color=color)]]
 
-    return [header], [sg.Column(column_layout, scrollable=True, vertical_scroll_only=True, size=(800, 400), key="acc_col")]
+    return [header], [sg.Column(column_layout, scrollable=True, vertical_scroll_only=True, size=(900, 400), key="acc_col")]
 
 
 def get_account_transactions_column_layout(account: Account) -> list[list[Any]]:
@@ -209,10 +211,22 @@ def get_account_transactions_column_layout(account: Account) -> list[list[Any]]:
     ], [sg.HorizontalSeparator()]])
 
     column_layout = []
-    balance = 0.0
+    balance = account.incoming_balance
+    color = sg.theme_background_color()
+    column_layout += [[sg.Column([[
+        sg.Text("", size=(4, 1), background_color=color),
+        sg.Text("", justification='left', size=(15, 1), pad=(1,1), border_width=0, background_color=color),
+        sg.Text("Incoming", justification='left', size=(15, 1), pad=(1,1), border_width=0, background_color=color),
+        sg.Text("", justification='right', size=COLS["deb"].size[0], pad=(3,1), border_width=0, background_color=color),
+        sg.Text("", justification='right', size=COLS["cre"].size[0], pad=(3,1), border_width=0, background_color=color),
+        sg.Text(balance, justification='right', size=(10, 1), pad=(1,1), border_width=0, background_color=color),
+        sg.Text("", size=(6, 1), background_color=color),
+    ]], background_color=color)]]
+
+
     for row, (trans, ver) in enumerate(get_transactions_for_account(account)):
         balance += (trans.debit - trans.credit) * (-1 if account.is_debt or account.is_income else 1)
-        color = alternative_background_color() if row % 2 else sg.theme_background_color()
+        color = sg.theme_background_color() if row % 2 else alternative_background_color()
         column_layout += [[sg.Column([[
             sg.Text("", size=(4, 1), background_color=color),
             sg.Text(ver.id, justification='left', size=(15, 1), pad=(1,1), border_width=0, background_color=color),
@@ -298,7 +312,7 @@ def create_main_window() -> sg.Window:
         [sg.Text('ALOPcounting', font="Any 18")],
         [sg.Text('A simple open-source accounting programs, useful for smaller organizations.', font="Any 11 italic")],
         [sg.HorizontalSeparator()],
-        [sg.Text("Year:"), sg.Text("?", key="current_year")],
+        [sg.Text("Year:", font="Any 14"), sg.Text("?", key="current_year", font="Any 14")],
         [
             sg.Button('Prev', key='prev_year', pad=((10, 4), (2, 2))),
             sg.Button('Next', key='next_year', pad=(4, 2)),
@@ -306,8 +320,8 @@ def create_main_window() -> sg.Window:
             sg.Button('New year', key='new_year', pad=(4, 2))
         ],
         [sg.HorizontalSeparator()],
-        [sg.Text("Number of verifications:"), sg.Text(account_list().len, key="num_verifications")],
-        [sg.Text("Number of accounts:"), sg.Text(year().verification_list.len, key="num_accounts")],
+        [sg.Text("Number of verifications:"), sg.Text(year().verification_list.len, key="num_verifications")],
+        [sg.Text("Number of accounts:"), sg.Text(year().account_list.len, key="num_accounts")],
         [sg.Button('Show accounts', size=(15, None))],
         [sg.Button('Show verifications', size=(15, None))],
         [sg.Text('')],
@@ -331,7 +345,7 @@ def main_loop():
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         # Update values
-        main_window["num_accounts"].update(account_list().len)
+        main_window["num_accounts"].update(year().account_list.len)
         main_window["num_verifications"].update(year().verification_list.len)
         main_window["current_year"].update(year().year)
         if year().verification_list.len:
@@ -389,7 +403,6 @@ def main_loop():
             elif event == "new_year":
                 if accounts_window is None and verifications_window is None:
                     year().create_new_year()
-                    year().verification_list.save_verifications()
                 else:
                     sg.popup("Close accounts and verifications windows first!")
 
@@ -412,13 +425,13 @@ def main_loop():
                 if new_acc_num < 1000 or new_acc_num > 9999:
                     sg.popup(f"Bad account, '{new_acc_num}' outside accepted range (1000 - 9999)!")
                     continue
-                if account_list().find_account(new_acc_num):
+                if year().account_list.find_account(new_acc_num):
                     sg.popup(f"Bad account, '{new_acc_num}' already exists!")
                     continue
                 new_acc_desc = sg.popup_get_text("Add new account description")
                 new_acc = Account(new_acc_num, new_acc_desc)
-                account_list().add_account(new_acc)
-                account_list().save_accounts()
+                year().account_list.add_account(new_acc)
+                year().account_list.save_accounts()
                 # Reopen window to repopulate
                 accounts_window.close()
                 accounts_window = create_accounts_window()
@@ -427,11 +440,14 @@ def main_loop():
                 match = ROW_REGEX.match(event)
                 assert match, f"Bad event '{event}'"
                 idx = int(match.group('row'))
-                acc = account_list().get_accounts()[idx]
+                acc = year().account_list.get_accounts()[idx]
+                if account_has_transactions(acc):
+                    sg.popup(f"Account {acc.account_number} has transactions, not allowed to be removed!")
+                    continue
                 ok = sg.popup_ok_cancel(f"Remove account {acc.account_number}?")
                 if ok == "OK":
-                    account_list().remove_account(acc)
-                    account_list().save_accounts()
+                    year().account_list.remove_account(acc)
+                    year().account_list.save_accounts()
                     # Reopen window to repopulate
                     accounts_window.close()
                     accounts_window = create_accounts_window()
@@ -440,7 +456,7 @@ def main_loop():
                 match = ROW_REGEX.match(event)
                 assert match, f"Bad event '{event}'"
                 idx = int(match.group('row'))
-                acc = account_list().get_accounts()[idx]
+                acc = year().account_list.get_accounts()[idx]
                 if account_transactions_window is not None:
                     # Close and reopen with new account
                     account_transactions_window.close()
@@ -550,7 +566,7 @@ def create_html(filename: str):
                 with dt.tr():
                     dt.th("Account", style="min-width: 100px")
                     dt.th("Description", style="min-width: 100px")
-                for acc in account_list():
+                for acc in year().account_list:
                     with dt.tr():
                         dt.td(acc.account_number)
                         dt.td(acc.description)

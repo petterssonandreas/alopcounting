@@ -1,3 +1,9 @@
+from account import (
+    AccountList,
+    account_lists_years,
+    account_list,
+    create_new_account_list
+)
 from verification import (
     VerificationList,
     verification_lists_years,
@@ -36,7 +42,10 @@ class Year:
     def create_new_year(self):
         new_year = verification_lists_years()[-1] + 1
         create_new_verification_list(new_year)
+        create_new_account_list(new_year)
         self._year = new_year
+        self.verification_list.save_verifications()
+        self.account_list.save_accounts()
 
     @property
     def year(self) -> int:
@@ -45,6 +54,10 @@ class Year:
     @property
     def verification_list(self) -> VerificationList:
         return verification_list(self._year)
+
+    @property
+    def account_list(self) -> AccountList:
+        return account_list(self._year)
 
 
 _year: Year | None = None
@@ -55,15 +68,21 @@ def year_init():
     if _year is not None:
         raise PermissionError("Year already initialized, not allowed to call again!")
 
-    years = verification_lists_years()
+    ver_years = verification_lists_years()
+    acc_years = account_lists_years()
+    assert ver_years == acc_years, f"Years from verifications are not same as from accounts: {ver_years} {acc_years}"
+    years = ver_years
+
     if years:
         _year = Year(years[-1])
     else:
         cur_year = datetime.now().year
         print(f"No years, create current year: {cur_year}")
         create_new_verification_list(cur_year)
+        create_new_account_list(cur_year)
         _year = Year(cur_year)
         _year.verification_list.save_verifications()
+        _year.account_list.save_accounts()
 
 
 def year() -> Year:

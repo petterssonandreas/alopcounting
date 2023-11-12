@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import os
 
-from config import config_get_verifications_storage_dir_path
+from config import config_get_verifications_dir_iterator, config_get_verifications_dir_path
 from dataclass_json import dataclass_json_dumps, dataclass_json_loads
 from transaction import Transaction
 
@@ -68,17 +68,15 @@ class VerificationList:
         verifications: list[Verification] = []
 
         dir = Path(self._verifications_dir)
-        assert dir.exists(), f"{dir}: no such path"
-        assert dir.is_dir(), f"{dir}: not a directory"
-        year_dir = dir / Path(str(self._year))
-        if not year_dir.exists():
-            print(f"No year dir '{year_dir}', ignore loading verifications")
+        if not dir.exists():
+            print(f"No dir '{dir}', ignore loading verifications")
             return verifications
 
-        assert year_dir.is_dir(), f"{year_dir}: not a directory"
-        print(f"Loading verifications from: {year_dir.absolute()}")
-        for filepath in year_dir.iterdir():
-            verifications.append(Verification.load_from_file(filepath))
+        assert dir.is_dir(), f"{dir}: not a directory"
+        print(f"Loading verifications from: {dir.absolute()}")
+        for filepath in dir.iterdir():
+            if "verification" in filepath.name:
+                verifications.append(Verification.load_from_file(filepath))
 
         verifications.sort()
 
@@ -129,25 +127,20 @@ class VerificationList:
 
     def save_verifications(self):
         dir = Path(self._verifications_dir)
-        assert dir.exists(), f"{dir}: no such path"
-        assert dir.is_dir(), f"{dir}: not a directory"
-        year_dir = dir / Path(str(self._year))
-        if year_dir.exists():
-            assert year_dir.is_dir(), f"{year_dir}: not a directory"
+        if dir.exists():
+            assert dir.is_dir(), f"{dir}: not a directory"
         else:
-            os.mkdir(year_dir.absolute())
+            os.mkdir(dir.absolute())
 
-        print(f"Using verifications directory: {year_dir.absolute()}")
-        for filepath in year_dir.iterdir():
-            filepath.unlink()
+        print(f"Using verifications directory: {dir.absolute()}")
+        for filepath in dir.iterdir():
+            if "verification" in filepath.name:
+                filepath.unlink()
         for ver in self:
-            ver.save_to_file(year_dir)
+            ver.save_to_file(dir)
 
 
 _verification_lists: list[VerificationList] | None = None
-
-
-YEAR_RE = re.compile(r"\d\d\d\d")
 
 
 def verification_list_init():
@@ -157,20 +150,21 @@ def verification_list_init():
     else:
         raise PermissionError("Verification list already initialized, not allowed to call again!")
 
-    dir = config_get_verifications_storage_dir_path()
-    assert dir.exists(), f"{dir}: no such path"
-    assert dir.is_dir(), f"{dir}: not a directory"
-    for ipath in dir.iterdir():
-        if not ipath.is_dir():
-            print(f"{ipath} is not a dir")
+    for vl_path in config_get_verifications_dir_iterator():
+        vl_path = Path(vl_path)
+        if not vl_path.is_dir():
+            print(f"{vl_path} is not a directory")
             continue
-        match = YEAR_RE.match(ipath.name)
-        if not match:
-            print(f"{ipath} is not a valid year dir")
+
+        year_dir_name = vl_path.name
+        try:
+            year = int(year_dir_name, 10)
+        except ValueError as err:
+            print(f"Invalid year, ignoring '{vl_path.absolute()}'")
             continue
-        year = int(match.group(0))
+
         print(f"Loading verifications for year {year}")
-        _verification_lists.append(VerificationList(dir, year))
+        _verification_lists.append(VerificationList(vl_path, year))
 
     _verification_lists.sort()
 
@@ -197,6 +191,6 @@ def create_new_verification_list(year: int):
     global _verification_lists
     assert _verification_lists is not None
     assert year not in verification_lists_years()
-    dir = config_get_verifications_storage_dir_path()
+    dir = config_get_verifications_dir_path(year)
     _verification_lists.append(VerificationList(dir, year))
     _verification_lists.sort()

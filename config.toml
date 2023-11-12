@@ -1,4 +1,3 @@
 [userdata]
 userdata_storage_path = "./userdata"
 accounts_filename = "accounts.json"
-verifications_dirname = "verifications"
