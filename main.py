@@ -101,7 +101,7 @@ def get_transactions_from_layout(values: dict[str: str]) -> list[Transaction] | 
             sg.popup(f"Row {row}: Both kredit and debet cannot be set!")
             return None
 
-        new_transes.append(Transaction(acc, debit, credit, vals[f"row{row}_not"]))
+        new_transes.append(Transaction(acc.account_number, debit, credit, vals[f"row{row}_not"]))
 
     return new_transes
 
@@ -270,7 +270,7 @@ def create_verifications_window() -> sg.Window:
         [sg.Column(get_accumulation_layout(), key="accumulation_col")],
     ]
 
-    return sg.Window('ALOPcounting Verifications', layout, size=(1000, 500), finalize=True, resizable=True)
+    return sg.Window('ALOPcounting Verifications', layout, size=(1000, 600), finalize=True, resizable=True)
 
 
 def create_accounts_window() -> sg.Window:
@@ -279,10 +279,13 @@ def create_accounts_window() -> sg.Window:
     layout = [
         [
             sg.Text('Accounts', font='Any 18'),
+            sg.VerticalSeparator(pad=(10, 0)),
+            sg.Text(f'{year().year}', font='Any 18'),
         ],
-        [sg.HorizontalSeparator()],
+        [sg.HorizontalSeparator(pad=(0, 10))],
         [
             sg.Button('New account', key="new_acc", pad=((0, 4), (4, 4))),
+            sg.Button('Recalculate incoming balance', key="recalc_incoming_balance", pad=((4, 4), (4, 4))),
             sg.Button('Quit', pad=((4, 4), (4, 4)))
         ],
         get_accounts_column_layout(),
@@ -435,6 +438,14 @@ def main_loop():
                 # Reopen window to repopulate
                 accounts_window.close()
                 accounts_window = create_accounts_window()
+
+            elif event == "recalc_incoming_balance":
+                ok = sg.popup_ok_cancel("Recalculate incoming balance based on previous year?")
+                if ok == "OK":
+                    year().recalc_incoming_account_balances()
+                    # Reopen window to repopulate
+                    accounts_window.close()
+                    accounts_window = create_accounts_window()
 
             elif "_delete_acc" in event:
                 match = ROW_REGEX.match(event)

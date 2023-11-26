@@ -11,6 +11,7 @@ from verification import (
     create_new_verification_list
 )
 from datetime import datetime
+import balance
 
 
 class Year:
@@ -46,6 +47,26 @@ class Year:
         self._year = new_year
         self.verification_list.save_verifications()
         self.account_list.save_accounts()
+
+    def recalc_incoming_account_balances(self):
+        years = account_lists_years()
+        if years.index(self._year) <= 0:
+            print("No previous year, nothing to recalculate")
+            return
+
+        # Switch to prev year for easier call of functions
+        cur_year_accounts = self.account_list
+        self.goto_prev_year()
+        prev_year_accounts = self.account_list
+        for cur_year_acc in cur_year_accounts:
+            prev_year_acc = prev_year_accounts.find_account(cur_year_acc.account_number)
+            if prev_year_acc:
+                cur_year_acc.incoming_balance = balance.get_balance_for_account(prev_year_acc)
+            else:
+                cur_year_acc.incoming_balance = 0
+
+        # Switch back to current year
+        self.goto_next_year()
 
     @property
     def year(self) -> int:
