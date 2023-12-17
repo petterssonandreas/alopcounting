@@ -24,7 +24,7 @@ A selection of things done and still to do:
 
 ### Reports
 My thought here is to create simple html, and open in a browser. The user can then print a pdf.
-- [ ] Create reports, eg. "resultatrapport" and "balansrapport"
+- [x] Create reports, eg. "resultatrapport" and "balansrapport"
 - [ ] Custom time period for reports (year, or shorter)
 
 ### Invoices
@@ -52,5 +52,8 @@ My thought here is to create simple html, and open in a browser. The user can th
 ### Split years
 - [x] incoming balance on accounts
 - [x] Compute incoming balance from previous year
+
+### Language
+- [ ] Decide on swedish or english, or add translations
 
 ### And probably much more...
