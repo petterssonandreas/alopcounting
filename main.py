@@ -6,7 +6,7 @@ from account import Account, account_list_init
 from transaction import Transaction
 from verification import Verification, verification_list_init
 from balance import account_has_transactions, get_transactions_for_account, get_balance_for_account, get_balance_from_transactions
-from config import config_init, config_do_git_commit
+from config import config_init, config_do_git_commit, config_get_company_name, config_get_company_number
 from year import year_init, year
 import PySimpleGUI as sg
 import pprint
@@ -315,6 +315,9 @@ def create_main_window() -> sg.Window:
     layout = [
         [sg.Text('ALOPcounting', font="Any 18")],
         [sg.Text('A simple open-source accounting programs, useful for smaller organizations.', font="Any 11 italic")],
+        [sg.HorizontalSeparator()],
+        [sg.Text(config_get_company_name(), font="Any 16")],
+        [sg.Text(config_get_company_number(), font="Any 12")],
         [sg.HorizontalSeparator()],
         [sg.Text("Year:", font="Any 14"), sg.Text("?", key="current_year", font="Any 14")],
         [

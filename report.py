@@ -4,6 +4,7 @@ import dominate.tags as dt
 
 from year import Year
 from balance import get_balance_for_account, account_has_transactions
+from config import config_get_company_name, config_get_company_number
 
 
 def create_balance_report(filename: str, year: Year, start_date: date=None, end_date: date=None):
@@ -56,8 +57,8 @@ tr:nth-child(odd) {
         with dt.div(style='margin: 50px; font-family: sans-serif; font-size: smaller;'):
             dt.attr(cls='body')
             dt.h1('Balance report')
-            dt.h2('Your Company Name', style="margin: 4pt 0 4pt 0")
-            dt.h2('Your Company Number', style="margin: 4pt 0 10pt 0")
+            dt.h2(config_get_company_name(), style="margin: 4pt 0 4pt 0")
+            dt.h2(config_get_company_number(), style="margin: 4pt 0 10pt 0")
             dt.p(f'Accounting year: {year.period_start}  \u2013  {year.period_end}', style="margin: 4pt 0 4pt 0")
             dt.p(f'Period: {start_date}  \u2013  {end_date}', style="margin: 4pt 0 4pt 0")
             dt.p(f'Printed: {date.today()}', style="margin: 4pt 0 4pt 0")
@@ -186,8 +187,8 @@ tr:nth-child(odd) {
         with dt.div(style='margin: 50px; font-family: sans-serif; font-size: smaller;'):
             dt.attr(cls='body')
             dt.h1('Result report')
-            dt.h2('Your Company Name', style="margin: 4pt 0 4pt 0")
-            dt.h2('Your Company Number', style="margin: 4pt 0 10pt 0")
+            dt.h2(config_get_company_name(), style="margin: 4pt 0 4pt 0")
+            dt.h2(config_get_company_number(), style="margin: 4pt 0 10pt 0")
             dt.p(f'Accounting year: {year.period_start}  \u2013  {year.period_end}', style="margin: 4pt 0 4pt 0")
             dt.p(f'Period: {start_date}  \u2013  {end_date}', style="margin: 4pt 0 4pt 0")
             dt.p(f'Printed: {date.today()}', style="margin: 4pt 0 4pt 0")
