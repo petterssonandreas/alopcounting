@@ -51,6 +51,6 @@ My thought here is to create simple html, and open in a browser. The user can th
 
 ### Split years
 - [x] incoming balance on accounts
-- [ ] Compute incoming balance from previous year
+- [x] Compute incoming balance from previous year
 
 ### And probably much more...
