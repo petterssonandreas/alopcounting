@@ -60,13 +60,15 @@ class Year:
         prev_year_accounts = self.account_list
         for cur_year_acc in cur_year_accounts:
             prev_year_acc = prev_year_accounts.find_account(cur_year_acc.account_number)
-            if prev_year_acc:
+            if prev_year_acc and (prev_year_acc.is_asset or prev_year_acc.is_debt):
                 cur_year_acc.incoming_balance = balance.get_balance_for_account(prev_year_acc)
             else:
                 cur_year_acc.incoming_balance = 0
 
         # Switch back to current year
         self.goto_next_year()
+        # Save accounts with the new balances
+        cur_year_accounts.save_accounts()
 
     @property
     def year(self) -> int:
