@@ -45,6 +45,7 @@ class Year:
         create_new_verification_list(new_year)
         create_new_account_list(new_year)
         self._year = new_year
+        self.recalc_incoming_account_balances()
         self.verification_list.save_verifications()
         self.account_list.save_accounts()
 
