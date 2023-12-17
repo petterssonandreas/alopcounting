@@ -10,7 +10,7 @@ from verification import (
     verification_list,
     create_new_verification_list
 )
-from datetime import datetime
+from datetime import datetime, date
 import balance
 
 
@@ -74,6 +74,14 @@ class Year:
     @property
     def year(self) -> int:
         return self._year
+
+    @property
+    def period_start(self) -> date:
+        return date(year=self.year, month=1, day=1)
+
+    @property
+    def period_end(self) -> date:
+        return date(year=self.year, month=12, day=31)
 
     @property
     def verification_list(self) -> VerificationList:

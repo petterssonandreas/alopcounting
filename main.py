@@ -1,6 +1,7 @@
 
 import re
 from typing import Any
+import webbrowser
 from account import Account, account_list_init
 from transaction import Transaction
 from verification import Verification, verification_list_init
@@ -10,11 +11,9 @@ from year import year_init, year
 import PySimpleGUI as sg
 import pprint
 import dataclasses as dc
-import dominate
-import dominate.tags as dt
-import webbrowser
 from _version import __version__
 from datetime import date
+from report import create_balance_report, create_result_report
 
 @dc.dataclass
 class ColInfo:
@@ -286,6 +285,8 @@ def create_accounts_window() -> sg.Window:
         [
             sg.Button('New account', key="new_acc", pad=((0, 4), (4, 4))),
             sg.Button('Recalculate incoming balance', key="recalc_incoming_balance", pad=((4, 4), (4, 4))),
+            sg.Button('Balance report', key="balance_report", pad=((4, 4), (4, 4))),
+            sg.Button('Result report', key="result_report", pad=((4, 4), (4, 4))),
             sg.Button('Quit', pad=((4, 4), (4, 4)))
         ],
         get_accounts_column_layout(),
@@ -473,6 +474,13 @@ def main_loop():
                     account_transactions_window.close()
                 account_transactions_window = create_account_transactions_window(acc)
 
+            elif "balance_report" in event:
+                create_balance_report("balance.html", year())
+                webbrowser.open_new_tab("balance.html")
+
+            elif "result_report" in event:
+                create_result_report("result.html", year())
+                webbrowser.open_new_tab("result.html")
 
         # Verifications window
         elif window == verifications_window:
@@ -558,34 +566,6 @@ def main_loop():
                 account_transactions_window = None
 
 
-def create_html(filename: str):
-    doc = dominate.document(title='ALOP Counting')
-
-    with doc.head:
-        # dt.link(rel='stylesheet', href='style.css')
-        # dt.script(type='text/javascript', src='script.js')
-        pass
-
-    with doc:
-        with dt.div(id='header'):
-            pass
-
-        with dt.div(style='margin: 50px'):
-            dt.attr(cls='body')
-            dt.h1('Accounts')
-            with dt.table(style='text-align: left'):
-                with dt.tr():
-                    dt.th("Account", style="min-width: 100px")
-                    dt.th("Description", style="min-width: 100px")
-                for acc in year().account_list:
-                    with dt.tr():
-                        dt.td(acc.account_number)
-                        dt.td(acc.description)
-
-    with open(filename, "w") as html_file:
-        html_file.write(str(doc))
-
-
 def main():
     print(f"Running ALOPCounting, version: {__version__}")
 
@@ -602,8 +582,6 @@ def main():
 
     config_do_git_commit("EXIT - Commit accounts and verifications")
 
-    # create_html("content.html")
-    # webbrowser.open_new_tab("content.html")
 
 if __name__ == "__main__":
     main()

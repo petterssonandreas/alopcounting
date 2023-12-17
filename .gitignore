@@ -6,3 +6,8 @@ userdata/
 userdata/*
 .vscode/*
 pysimpleguitesting/*
+balance.html
+balance.html.css
+result.html
+result.html.css
+*.zip

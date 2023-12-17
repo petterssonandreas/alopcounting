@@ -64,6 +64,19 @@ class VerificationList:
         self._index += 1
         return result
 
+    def __len__(self) -> int:
+        return len(self._verifications)
+
+    def __getitem__(self, idx) -> Verification:
+        if type(idx) is not int:
+            raise TypeError
+        if idx < 0:
+            idx = -idx - 1
+            vers_copy = self._verifications.copy()
+            vers_copy.reverse()
+            return vers_copy[idx]
+        return self._verifications[idx]
+
     def _load_verifications(self) -> list[Verification]:
         verifications: list[Verification] = []
 
