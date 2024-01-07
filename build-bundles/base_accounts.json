@@ -2,86 +2,103 @@
     {
         "account_number": 1510,
         "description": "Kundfordringar",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 1930,
         "description": "Företagskonto / affärskonto",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 2060,
         "description": "Eget kapital",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 2099,
         "description": "Årets resultat",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 2440,
         "description": "Leverantörsskulder",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 2820,
         "description": "Kortfristiga skulder till anställda",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 2894,
         "description": "Kortfristiga skulder swish",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 3014,
         "description": "Försäljning tjänster inom Sverige, momsfri",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 3020,
         "description": "Biljettintäkter medlemsaktivitet",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 3029,
         "description": "Övriga intäkter medlemsaktivitet",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 3900,
         "description": "Övriga rörelseintäkter",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 3989,
         "description": "Övriga erhållna bidrag",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 4410,
         "description": "Medlemsaktiviteter",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 4411,
         "description": "Medlemsgåvor",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 6540,
         "description": "IT-tjänster",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 6570,
         "description": "Bankkostnader",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     },
     {
         "account_number": 8999,
         "description": "Årets resultat",
+        "incoming_balance": 0,
         "__dataclass__": "account.Account"
     }
 ]

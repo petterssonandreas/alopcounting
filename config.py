@@ -13,6 +13,7 @@ DEFAULT_TOML_CONFIG: toml.TOMLDocument = toml.parse("""\
 [userdata]
 userdata_storage_path = "./userdata"
 accounts_filename = "accounts.json"
+base_accounts_filename = "base_accounts.json"
 
 [info]
 company_name = "CompAny Inc"
@@ -48,6 +49,7 @@ def config_init() -> bool:
     try:
         storage_path = _toml_config["userdata"]["userdata_storage_path"]
         acc_filename = _toml_config["userdata"]["accounts_filename"]
+        base_acc_filename = _toml_config["userdata"]["base_accounts_filename"]
         company_name = _toml_config["info"]["company_name"]
         company_number = _toml_config["info"]["company_number"]
     except toml.exceptions.NonExistentKey as err:
@@ -59,6 +61,9 @@ def config_init() -> bool:
         return False
     if type(acc_filename) is not toml.items.String:
         print(f"Incorrect type, expected string, for key: userdata/accounts_filename")
+        return False
+    if type(base_acc_filename) is not toml.items.String:
+        print(f"Incorrect type, expected string, for key: userdata/base_accounts_filename")
         return False
     if type(company_name) is not toml.items.String:
         print(f"Incorrect type, expected string, for key: info/company_name")
@@ -92,6 +97,10 @@ def config_get_verifications_dir_iterator() -> Iterator[str]:
 def config_get_accounts_path(year: int) -> Path:
     global _toml_config
     return Path(_toml_config["userdata"]["userdata_storage_path"].value) / Path(str(year)) / Path(_toml_config["userdata"]["accounts_filename"].value)
+
+def config_get_base_accounts_path() -> Path:
+    global _toml_config
+    return Path(_toml_config["userdata"]["userdata_storage_path"].value) / Path(_toml_config["userdata"]["base_accounts_filename"].value)
 
 def config_get_verifications_dir_path(year: int) -> Path:
     global _toml_config

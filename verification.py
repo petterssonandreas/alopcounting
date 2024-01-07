@@ -166,7 +166,7 @@ def verification_list_init():
     for vl_path in config_get_verifications_dir_iterator():
         vl_path = Path(vl_path)
         if not vl_path.is_dir():
-            print(f"{vl_path} is not a directory")
+            print(f"{vl_path} is not a directory, ignoring for ver loading")
             continue
 
         year_dir_name = vl_path.name

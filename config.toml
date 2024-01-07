@@ -1,6 +1,7 @@
 [userdata]
 userdata_storage_path = "./userdata"
 accounts_filename = "accounts.json"
+base_accounts_filename = "base_accounts.json"
 
 [info]
 company_name = "CompAny Inc"

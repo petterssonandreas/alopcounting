@@ -2,7 +2,7 @@ import dataclasses as dc
 import re
 from pathlib import Path
 from dataclass_json import dataclass_json_loads, dataclass_json_dumps
-from config import config_get_accounts_iterator, config_get_accounts_path
+from config import config_get_accounts_iterator, config_get_accounts_path, config_get_base_accounts_path
 
 
 @dc.dataclass
@@ -59,24 +59,10 @@ class AccountList:
     def __lt__(self, other):
         return self._year <= other._year
 
-    def _load_accounts(self, new_year: bool) -> list[Account]:
-        acc_file_path = Path(self._accounts_filepath)
-
-        if new_year:
-            assert not acc_file_path.exists(), f"{acc_file_path}: already exists"
-            acc_file_path.parent.mkdir(exist_ok=True)
-            print("Copy accounts from previous year if available")
-            years = account_lists_years()
-            if len(years):
-                self._accounts = account_list(years[-1]).get_accounts()
-            else:
-                self._accounts = []
-            self.save_accounts()
-        else:
-            assert acc_file_path.exists(), f"{acc_file_path}: no such path"
-
-        print(f"Loading accounts from: {acc_file_path.absolute()}")
-        with open(acc_file_path, 'r', encoding='utf-8') as acc_file:
+    def _load_accounts_from_file(self, filepath: Path) -> list[Account]:
+        print(f"Loading accounts from: {filepath.absolute()}")
+        assert filepath.exists(), f"{filepath}: no such path"
+        with open(filepath, 'r', encoding='utf-8') as acc_file:
             accounts = dataclass_json_loads(acc_file.read())
 
         print(f"Loaded {len(accounts)} accounts")
@@ -90,6 +76,27 @@ class AccountList:
 
         print(f"{len(filtered_accounts)} accounts left after filtering")
         return filtered_accounts
+
+    def _load_accounts(self, new_year: bool) -> list[Account]:
+        acc_file_path = Path(self._accounts_filepath)
+        base_acc_file_path = config_get_base_accounts_path()
+
+        if new_year:
+            assert not acc_file_path.exists(), f"{acc_file_path}: already exists"
+            acc_file_path.parent.mkdir(exist_ok=True)
+            years = account_lists_years()
+            if len(years):
+                print("Previous year available, copy")
+                self._accounts = account_list(years[-1]).get_accounts()
+            elif base_acc_file_path.exists():
+                print("No previous year, copy accounts from base")
+                self._accounts = self._load_accounts_from_file(base_acc_file_path)
+            else:
+                print("No previous year nor base accounts")
+                self._accounts = []
+            return self._accounts
+
+        return self._load_accounts_from_file(acc_file_path)
 
     def get_accounts(self) -> list[Account]:
         return self._accounts.copy()

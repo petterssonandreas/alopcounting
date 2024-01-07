@@ -44,9 +44,9 @@ if [ -d "$dir" ]; then
     fi
 fi
 
-mkdir -p $dir/userdata/verifications
 pyinstaller -wF --name ALOPCounting.exe --distpath $dir main.py
-cp build-bundles/accounts.json $dir/userdata/accounts.json
+mkdir -p $dir/userdata
+cp build-bundles/base_accounts.json $dir/userdata/base_accounts.json
 cp config.toml $dir/config.toml
 
 cd $dir
